@@ -1,6 +1,6 @@
+extern crate byteorder;
 extern crate memmap;
 
-use std::fs::File;
 use std::path::Path;
 
 mod cpu;
@@ -17,18 +17,12 @@ pub type Result<T> = std::result::Result<T, GBAError>;
 fn run_gba() -> Result<()> {
     let path = Path::new("roms/minish_cap.gba");
 
-    /*
-    let f = File::open(&path).unwrap();
-
-    let rom = unsafe { memmap::Mmap::map(&f).unwrap() };
-
-    println!("ROM size: {}", rom.len());
-    println!("Fixed value: {:x}", rom[0xb2]);
-    */
-
     let rom = rom::Rom::new(&path);
 
     println!("ROM: {:?}", &rom);
+
+    let mmu = mmu::Mmu::new();
+    let cpu = cpu::Cpu::new(mmu);
 
     Ok(())
 }
