@@ -1,4 +1,6 @@
 extern crate byteorder;
+#[macro_use] extern crate log;
+extern crate env_logger;
 extern crate memmap;
 
 use std::boxed::Box;
@@ -31,6 +33,8 @@ fn run_gba() -> Result<()> {
 }
 
 fn main() {
+    env_logger::init();
+
     use GBAError::*;
     match run_gba() {
         Ok(_) => {}
