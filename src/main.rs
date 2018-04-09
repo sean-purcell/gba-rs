@@ -1,6 +1,7 @@
 extern crate byteorder;
 extern crate memmap;
 
+use std::boxed::Box;
 use std::path::Path;
 
 mod cpu;
@@ -21,8 +22,10 @@ fn run_gba() -> Result<()> {
 
     println!("ROM: {:?}", &rom);
 
-    let mmu = mmu::Mmu::new();
-    let cpu = cpu::Cpu::new(mmu);
+    const MEM_SIZE: usize = 0x10000;
+
+    let mmu = mmu::raw::Raw::new(MEM_SIZE);
+    let cpu = cpu::Cpu::new(Box::new(mmu), 0x0);
 
     Ok(())
 }
