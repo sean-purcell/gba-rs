@@ -10,6 +10,12 @@ pub trait Mmu {
     fn set8(&mut self, addr: u32, val: u8);
 
     #[inline]
+    fn load16(&self, addr: u32) -> u16;
+
+    #[inline]
+    fn set16(&mut self, addr: u32, val: u16);
+
+    #[inline]
     fn load32(&self, addr: u32) -> u32;
 
     #[inline]

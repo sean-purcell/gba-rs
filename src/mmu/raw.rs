@@ -35,6 +35,20 @@ impl Mmu for Raw {
     }
 
     #[inline]
+    fn load16(&self, addr: u32) -> u16 {
+        debug_assert!(addr % 2 == 0);
+        let idx = addr as usize;
+        LittleEndian::read_u16(&self.mem[idx..idx + 2])
+    }
+
+    #[inline]
+    fn set16(&mut self, addr: u32, val: u16) {
+        debug_assert!(addr % 2 == 0);
+        let idx = addr as usize;
+        LittleEndian::write_u16(&mut self.mem[idx..idx + 2], val)
+    }
+
+    #[inline]
     fn load32(&self, addr: u32) -> u32 {
         debug_assert!(addr % 4 == 0);
         let idx = addr as usize;
