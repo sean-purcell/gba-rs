@@ -1,18 +1,34 @@
 extern crate byteorder;
+extern crate clap;
 #[macro_use]
 extern crate log;
 extern crate env_logger;
-#[macro_use]
-extern crate maplit;
 extern crate memmap;
 
 use std::boxed::Box;
+use std::ffi::OsStr;
 use std::path::Path;
+
+use clap::{App,Arg};
 
 mod bit_util;
 mod cpu;
 mod mmu;
 mod rom;
+
+fn main() {
+    env_logger::init();
+
+    use GBAError::*;
+    match run_emu() {
+        Ok(_) => {}
+        Err(errcode) => {
+            match errcode {
+                RomLoadError(err) => println!("ROM failed to load: {:?}", err),
+            }
+        }
+    }
+}
 
 #[derive(Debug)]
 pub enum GBAError {
@@ -21,31 +37,34 @@ pub enum GBAError {
 
 pub type Result<T> = std::result::Result<T, GBAError>;
 
-fn run_gba() -> Result<()> {
-    let path = Path::new("roms/minish_cap.gba");
+fn run_emu() -> Result<()> {
+    let app_m = App::new("gba-rs")
+        .version("0.1")
+        .about("Bad GBA Emulator")
+        .author("Sean Purcell")
+        .arg(Arg::with_name("rom")
+             .required(true)
+             .help("ROM file to emulate"))
+        .get_matches();
 
-    let rom = rom::GameRom::new(&path);
+    run_game(app_m.value_of_os("rom").unwrap())
+}
+
+fn run_game(path: &OsStr) -> Result<()> {
+    let path = Path::new(path);
+
+    let rom = rom::GameRom::new(&path)?;
 
     println!("ROM: {:?}", &rom);
 
-    const MEM_SIZE: usize = 0x10000;
+    let mmu = mmu::gba::Gba::new_with_rom(rom);
 
-    let mmu = mmu::ram::Ram::new(MEM_SIZE);
-    let cpu = cpu::Cpu::new(Box::new(mmu), &vec![(0u8, 0u32)]);
+    use cpu::reg;
+    let mut cpu = cpu::Cpu::new(Box::new(mmu),
+        &[(reg::PC, 0x08000000),
+          (reg::SP, 0x03007F00)]);
+
+    cpu.run();
 
     Ok(())
-}
-
-fn main() {
-    env_logger::init();
-
-    use GBAError::*;
-    match run_gba() {
-        Ok(_) => {}
-        Err(errcode) => {
-            match errcode {
-                RomLoadError(err) => println!("ROM failed to load: {:?}", err),
-            }
-        }
-    }
 }
