@@ -68,3 +68,6 @@ fn run_game(path: &OsStr) -> Result<()> {
 
     Ok(())
 }
+
+#[cfg(test)]
+mod test;
