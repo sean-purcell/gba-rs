@@ -42,9 +42,14 @@ impl Deref for GameRom {
 }
 
 fn warning<T>(addr: u32, val: T)
-    where T: fmt::LowerHex
+where
+    T: fmt::LowerHex,
 {
-    warn!("Attempted to store to game ROM: a: {:#010x}, v: {:#x}", addr, val);
+    warn!(
+        "Attempted to store to game ROM: a: {:#010x}, v: {:#x}",
+        addr,
+        val
+    );
 }
 
 impl Mmu for GameRom {

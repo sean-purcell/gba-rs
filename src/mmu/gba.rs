@@ -49,7 +49,7 @@ impl MemoryRange {
             if l <= addr && addr < u {
                 return *range;
             }
-        };
+        }
         MemoryRange::Unused
     }
 }
@@ -108,7 +108,10 @@ impl Mmu for Gba {
     fn load8(&self, addr: u32) -> u8 {
         match self.get_range(addr) {
             Some((naddr, mmu)) => mmu.load8(naddr),
-            None => { warning(addr); 0 },
+            None => {
+                warning(addr);
+                0
+            }
         }
     }
 
@@ -124,7 +127,10 @@ impl Mmu for Gba {
     fn load16(&self, addr: u32) -> u16 {
         match self.get_range(addr) {
             Some((naddr, mmu)) => mmu.load16(naddr),
-            None => { warning(addr); 0 },
+            None => {
+                warning(addr);
+                0
+            }
         }
     }
 
@@ -140,7 +146,10 @@ impl Mmu for Gba {
     fn load32(&self, addr: u32) -> u32 {
         match self.get_range(addr) {
             Some((naddr, mmu)) => mmu.load32(naddr),
-            None => { warning(addr); 0 },
+            None => {
+                warning(addr);
+                0
+            }
         }
     }
 

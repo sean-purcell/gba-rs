@@ -9,7 +9,7 @@ use std::boxed::Box;
 use std::ffi::OsStr;
 use std::path::Path;
 
-use clap::{App,Arg};
+use clap::{App, Arg};
 
 mod bit_util;
 mod cpu;
@@ -42,9 +42,9 @@ fn run_emu() -> Result<()> {
         .version("0.1")
         .about("Bad GBA Emulator")
         .author("Sean Purcell")
-        .arg(Arg::with_name("rom")
-             .required(true)
-             .help("ROM file to emulate"))
+        .arg(Arg::with_name("rom").required(true).help(
+            "ROM file to emulate",
+        ))
         .get_matches();
 
     run_game(app_m.value_of_os("rom").unwrap())
@@ -60,9 +60,10 @@ fn run_game(path: &OsStr) -> Result<()> {
     let mmu = mmu::gba::Gba::new_with_rom(rom);
 
     use cpu::reg;
-    let mut cpu = cpu::Cpu::new(Box::new(mmu),
-        &[(reg::PC, 0x08000000),
-          (reg::SP, 0x03007F00)]);
+    let mut cpu = cpu::Cpu::new(
+        Box::new(mmu),
+        &[(reg::PC, 0x08000000), (reg::SP, 0x03007F00)],
+    );
 
     cpu.run();
 
