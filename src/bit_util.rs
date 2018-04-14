@@ -24,6 +24,12 @@ pub fn bit(val: u32, bit: u8) -> u32 {
     (val >> bit) & 1
 }
 
+#[inline]
+pub fn sign_extend(val: u32, len: u8) -> u32 {
+    debug_assert!(len < 32);
+    let off = 32 - len;
+    (((val as i32) << off) >> off) as u32
+}
 
 // These functions return the shifted values as well as the carry bit
 #[inline]
@@ -128,7 +134,7 @@ mod test {
     }
 
     #[test]
-    fn overrotate() {
+    fn test_overrotate() {
         let val = 0xf000000u32;
         assert_eq!(val.rotate_right(68), 0x0f00000u32);
     }
@@ -140,5 +146,11 @@ mod test {
         assert_eq!(shift_lsr(0x11, 1), (0x8, 1));
         assert_eq!(shift_lsr(0x11, 2), (0x4, 0));
         assert_eq!(shift_ror(0x11, 1), (0x80000008, 1));
+    }
+
+    #[test]
+    fn test_sign_extend() {
+        assert_eq!(0xfffffff0, sign_extend(0xf0, 8));
+        assert_eq!(0x00000070, sign_extend(0x70, 8));
     }
 }
