@@ -38,6 +38,8 @@ impl MemoryRange {
     pub fn convert_addr(&self, addr: u32) -> u32 {
         use self::MemoryRange::*;
         match *self {
+            BoardWram => addr & 0x3ffff, // mirroring
+            ChipWram => addr & 0x7fff,
             GamePakRom => addr & 0x1FFFFFF,
             _ => addr - self.bounds().0,
         }

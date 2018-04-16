@@ -4,6 +4,7 @@ extern crate clap;
 extern crate log;
 extern crate env_logger;
 extern crate memmap;
+extern crate sdl2;
 
 use std::boxed::Box;
 use std::ffi::OsStr;
@@ -13,8 +14,11 @@ use clap::{App, Arg};
 
 mod bit_util;
 mod cpu;
+mod io;
 mod mmu;
 mod rom;
+
+mod gba;
 
 fn main() {
     env_logger::init();
@@ -47,7 +51,8 @@ fn run_emu() -> Result<()> {
         ))
         .get_matches();
 
-    run_game(app_m.value_of_os("rom").unwrap())
+    //run_game(app_m.value_of_os("rom").unwrap())
+    run_gba(app_m.value_of_os("rom").unwrap())
 }
 
 fn run_game(path: &OsStr) -> Result<()> {
@@ -55,7 +60,7 @@ fn run_game(path: &OsStr) -> Result<()> {
 
     let rom = rom::GameRom::new(&path)?;
 
-    println!("ROM: {:?}", &rom);
+    info!("ROM: {:?}", &rom);
 
     let mmu = mmu::gba::Gba::new_with_rom(rom);
 
@@ -66,6 +71,33 @@ fn run_game(path: &OsStr) -> Result<()> {
     );
 
     cpu.run();
+
+    Ok(())
+}
+
+fn run_gba(path: &OsStr) -> Result<()> {
+    let mut gba = gba::Gba::new();
+
+    let mut event_pump = gba.ctx.event_pump().unwrap();
+    let mut i = 0;
+    loop {
+        use sdl2;
+        i = (i + 1) % 255;
+        gba.canvas.set_draw_color(
+            sdl2::pixels::Color::RGB(i, 64, 255 - i),
+        );
+        gba.canvas.clear();
+        gba.canvas.set_draw_color(sdl2::pixels::Color::RGB(0, 0, 0));
+        gba.canvas.draw_point(sdl2::rect::Point::new(120, 80));
+        event_pump.pump_events();
+        let keys = event_pump.keyboard_state();
+        if keys.is_scancode_pressed(sdl2::keyboard::Scancode::Escape) {
+            break;
+        }
+        gba.canvas.present();
+
+        std::thread::sleep(std::time::Duration::new(0, 1_000_000_000u32 / 60));
+    }
 
     Ok(())
 }
