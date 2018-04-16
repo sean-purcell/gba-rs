@@ -6,13 +6,14 @@ extern crate env_logger;
 extern crate memmap;
 extern crate sdl2;
 
-use std::boxed::Box;
 use std::ffi::OsStr;
 use std::path::Path;
 
 use clap::{App, Arg};
 
 mod bit_util;
+mod shared;
+
 mod cpu;
 mod io;
 mod mmu;
@@ -62,11 +63,11 @@ fn run_game(path: &OsStr) -> Result<()> {
 
     info!("ROM: {:?}", &rom);
 
-    let mmu = mmu::gba::Gba::new_with_rom(rom);
+    let mut mmu = mmu::gba::Gba::new_with_rom(rom);
 
     use cpu::reg;
     let mut cpu = cpu::Cpu::new(
-        Box::new(mmu),
+        shared::Shared::new(&mut mmu),
         &[(reg::PC, 0x08000000), (reg::SP, 0x03007F00)],
     );
 
@@ -76,8 +77,14 @@ fn run_game(path: &OsStr) -> Result<()> {
 }
 
 fn run_gba(path: &OsStr) -> Result<()> {
-    let mut gba = gba::Gba::new();
+    let path = Path::new(path);
 
+    let rom = rom::GameRom::new(&path)?;
+
+    let mut gba = gba::Gba::new(rom);
+
+    /*
+    gba.run();
     let mut event_pump = gba.ctx.event_pump().unwrap();
     let mut i = 0;
     loop {
@@ -98,8 +105,9 @@ fn run_gba(path: &OsStr) -> Result<()> {
 
         std::thread::sleep(std::time::Duration::new(0, 1_000_000_000u32 / 60));
     }
+    */
 
-    Ok(())
+    gba.run()
 }
 
 #[cfg(test)]

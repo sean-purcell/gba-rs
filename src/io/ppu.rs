@@ -1,9 +1,7 @@
-use std::cell::{RefCell, RefMut};
-use std::rc::{Rc, Weak};
-
 use sdl2::render::Canvas;
 use sdl2::video::Window;
 
+use mmu::Mmu;
 use mmu::ram::Ram;
 use shared::Shared;
 
@@ -12,30 +10,25 @@ use super::IoReg;
 /// Handle scanline drawing here
 pub struct Ppu {
     canvas: Shared<Canvas<Window>>,
+    io: Shared<IoReg>,
+    vram: Shared<Ram>,
     col: u32,
     row: u32,
 }
 
 impl Ppu {
-    pub fn new(canvas: &Rc<RefCell<Canvas<Window>>>) -> Ppu {
+    pub fn new(canvas: Shared<Canvas<Window>>, io: Shared<IoReg>, vram: Shared<Ram>) -> Ppu {
         Ppu {
-            canvas: Rc::downgrade(canvas),
-            io: Weak::new(),
-            vram: Weak::new(),
+            canvas: canvas,
+            io: io,
+            vram: vram,
             col: 0,
             row: 0,
         }
     }
 
-    pub fn set_io(&mut self, io: &Rc<RefCell<IoReg>>) {
-        self.io = Rc::downgrade(io);
-    }
-
-    pub fn set_vram(&mut self, vram: &Rc<RefCell<Ram>>) {
-        self.vram = Rc::downgrade(vram);
-    }
-
     pub fn cycle(&mut self) {
         // Want to render pixel at col, row
+        println!("{:?}", self.vram.load32(0));
     }
 }

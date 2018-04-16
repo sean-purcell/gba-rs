@@ -1,54 +1,85 @@
-use std::cell::{RefCell, Ref, RefMut};
 use std::fmt;
-use std::ops::Deref;
-use std::rc::Rc;
+use std::mem;
+use std::ops::{Deref, DerefMut};
+use std::ptr;
 
 /// Class to help with the weak references between singletons in the GBA
-/// structure
+/// structure.  Totally throwing safety out the window here.
 #[derive(Clone)]
-struct Shared<T> {
-    v: Weak<RefCell<T>>
+pub struct Shared<T> {
+    t: *mut T,
 }
 
-impl <T> Shared<T> {
-    fn new(t: T)-> Shared<T> {
-        Shared{v: Rc::new(RefCell::new(t))}
-    }
-}
-
-impl <T> Shared<T> {
-    fn borrow(&self) -> Ref<T> {
-        self.v.borrow()
+impl<T> Shared<T> {
+    pub fn empty() -> Shared<T> {
+        Shared { t: ptr::null_mut() }
     }
 
-    fn borrow_mut(&self) -> RefMut<T> {
-        self.v.borrow_mut()
-    }
-
-    fn as_ptr(&self) -> *mut T {
-        self.v.as_ptr()
+    pub fn new(val: &mut T) -> Shared<T> {
+        Shared { t: val as *mut T }
     }
 }
 
-
-impl <T: fmt::Display> fmt::Display for Shared<T> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.deref())
-    }
-}
-
-impl <T: fmt::Debug> fmt::Debug for Shared<T> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{:?}", self.deref())
-    }
-}
-
-impl <'a,T> Deref for Shared<T>{
+impl<T> Deref for Shared<T> {
     type Target = T;
 
-    #[inline]
     fn deref(&self) -> &T {
-        unsafe {self.as_ptr().as_ref().unwrap()}
+        if self.t.is_null() {
+            panic!("Dereferencing uninitialized shared");
+        }
+        unsafe { &(*self.t) }
+    }
+}
+
+impl<T> DerefMut for Shared<T> {
+    fn deref_mut(&mut self) -> &mut T {
+        if self.t.is_null() {
+            panic!("Dereferencing uninitialized shared");
+        }
+        unsafe { &mut (*self.t) }
+    }
+}
+
+impl<T: fmt::Debug> fmt::Debug for Shared<T> {
+    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
+        let mut dbg = fmt.debug_struct("Shared");
+        let ndbg = dbg.field("t: ", &self.t);
+        if !self.t.is_null() {
+            ndbg.field("data: ", self.deref()).finish()
+        } else {
+            ndbg.finish()
+        }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::Shared;
+
+    #[test]
+    fn test_shared() {
+        let mut a = 5;
+        let mut b = Shared::new(&mut a);
+
+        (*b) = 3;
+
+        assert_eq!(a, 3);
     }
 
+    #[test]
+    #[should_panic(expected = "Dereferencing uninitialized shared")]
+    fn test_uninitialized() {
+        let b: Shared<i32> = Shared::empty();
+
+        assert_eq!(*b, 3);
+    }
+
+    #[test]
+    fn test_boxes() {
+        trait B {}
+        impl B for u32 {}
+
+        let a: Box<u32> = Box::new(5);
+        let b: Box<B> = a;
+    }
 }

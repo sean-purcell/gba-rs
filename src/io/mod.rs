@@ -4,7 +4,7 @@ use mmu::ram::Ram;
 
 const IO_REG_SIZE: usize = 0x804;
 
-struct IoReg {
+pub struct IoReg {
     reg: Ram,
 }
 

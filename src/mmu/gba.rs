@@ -8,15 +8,17 @@ enum MemoryRange {
     Bios,
     BoardWram,
     ChipWram,
+    VideoRam,
     GamePakRom,
     GamePakSram,
     Unused,
 }
 
-const RANGES: [MemoryRange; 5] = [
+const RANGES: [MemoryRange; 6] = [
     MemoryRange::Bios,
     MemoryRange::BoardWram,
     MemoryRange::ChipWram,
+    MemoryRange::VideoRam,
     MemoryRange::GamePakRom,
     MemoryRange::GamePakSram,
 ];
@@ -29,6 +31,7 @@ impl MemoryRange {
             Bios        => (0x00000000, 0x00004000),
             BoardWram   => (0x02000000, 0x02040000),
             ChipWram    => (0x03000000, 0x03008000),
+            VideoRam    => (0x06000000, 0x06018000),
             GamePakRom  => (0x08000000, 0x0E000000),
             GamePakSram => (0x0E000000, 0x0E010000),
             Unused      => (0x00000000, 0xFFFFFFFF),
@@ -40,7 +43,17 @@ impl MemoryRange {
         match *self {
             BoardWram => addr & 0x3ffff, // mirroring
             ChipWram => addr & 0x7fff,
-            GamePakRom => addr & 0x1FFFFFF,
+            VideoRam => {
+                // Weird mirroring here
+                let chunk = addr & 0x1ffff;
+                // The upper 64k is two 32k mirrors
+                if chunk < 0x18000 {
+                    chunk
+                } else {
+                    chunk - 0x8000
+                }
+            }
+            GamePakRom => addr & 0x1ffffff,
             _ => addr - self.bounds().0,
         }
     }
@@ -58,10 +71,11 @@ impl MemoryRange {
 
 /// Implements the memory mapping for a GBA system
 pub struct Gba {
-    bram: Ram,
-    cram: Ram,
-    rom: GameRom,
-    gram: Ram,
+    pub bram: Ram,
+    pub cram: Ram,
+    pub vram: Ram,
+    pub rom: GameRom,
+    pub gram: Ram,
 }
 
 impl Gba {
@@ -69,6 +83,7 @@ impl Gba {
         Gba {
             bram: Ram::new(256 * 1024),
             cram: Ram::new(32 * 1024),
+            vram: Ram::new(128 * 1024),
             rom: rom,
             gram: Ram::new(64 * 1024),
         }
