@@ -6,6 +6,9 @@ extern crate env_logger;
 extern crate memmap;
 extern crate sdl2;
 
+extern crate flame;
+
+use std::fs::File;
 use std::ffi::OsStr;
 use std::path::Path;
 
@@ -33,6 +36,8 @@ fn main() {
             }
         }
     }
+
+    flame::dump_html(&mut File::create("flame-graph.html").unwrap()).unwrap();
 }
 
 #[derive(Debug)]
@@ -52,28 +57,7 @@ fn run_emu() -> Result<()> {
         ))
         .get_matches();
 
-    //run_game(app_m.value_of_os("rom").unwrap())
     run_gba(app_m.value_of_os("rom").unwrap())
-}
-
-fn run_game(path: &OsStr) -> Result<()> {
-    let path = Path::new(path);
-
-    let rom = rom::GameRom::new(&path)?;
-
-    info!("ROM: {:?}", &rom);
-
-    let mut mmu = mmu::gba::Gba::new_with_rom(rom);
-
-    use cpu::reg;
-    let mut cpu = cpu::Cpu::new(
-        shared::Shared::new(&mut mmu),
-        &[(reg::PC, 0x08000000), (reg::SP, 0x03007F00)],
-    );
-
-    cpu.run();
-
-    Ok(())
 }
 
 fn run_gba(path: &OsStr) -> Result<()> {

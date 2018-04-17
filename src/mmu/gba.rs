@@ -1,4 +1,8 @@
+use shared::Shared;
+
 use rom::GameRom;
+
+use io::IoReg;
 
 use super::Mmu;
 use super::ram::Ram;
@@ -24,6 +28,7 @@ const RANGES: [MemoryRange; 6] = [
 ];
 
 impl MemoryRange {
+    #[inline]
     fn bounds(&self) -> (u32, u32) {
         use self::MemoryRange::*;
         #[cfg_attr(rustfmt, rustfmt_skip)]
@@ -59,13 +64,17 @@ impl MemoryRange {
     }
 
     pub fn match_addr(addr: u32) -> MemoryRange {
-        for range in RANGES.iter() {
-            let (l, u) = range.bounds();
-            if l <= addr && addr < u {
-                return *range;
-            }
+        use bit_util::extract;
+        use self::MemoryRange::*;
+        match extract(addr, 24, 4) {
+            0x0 => Bios,
+            0x2 => BoardWram,
+            0x3 => ChipWram,
+            0x6 => VideoRam,
+            0x8 | 0x9 | 0xA | 0xB | 0xC | 0xD => GamePakRom,
+            0xE => GamePakSram,
+            _ => MemoryRange::Unused,
         }
-        MemoryRange::Unused
     }
 }
 
@@ -76,16 +85,19 @@ pub struct Gba {
     pub vram: Ram,
     pub rom: GameRom,
     pub gram: Ram,
+
+    io: Shared<IoReg>,
 }
 
 impl Gba {
-    pub fn new_with_rom(rom: GameRom) -> Gba {
+    pub fn new(rom: GameRom, io: Shared<IoReg>) -> Gba {
         Gba {
             bram: Ram::new(256 * 1024),
             cram: Ram::new(32 * 1024),
             vram: Ram::new(128 * 1024),
             rom: rom,
             gram: Ram::new(64 * 1024),
+            io: io,
         }
     }
 
@@ -96,6 +108,7 @@ impl Gba {
         match range {
             BoardWram => Some((naddr, &self.bram)),
             ChipWram => Some((naddr, &self.cram)),
+            VideoRam => Some((naddr, &self.vram)),
             GamePakRom => Some((naddr, &self.rom)),
             GamePakSram => Some((naddr, &self.gram)),
             _ => None,
@@ -109,6 +122,7 @@ impl Gba {
         match range {
             BoardWram => Some((naddr, &mut self.bram)),
             ChipWram => Some((naddr, &mut self.cram)),
+            VideoRam => Some((naddr, &mut self.vram)),
             GamePakRom => Some((naddr, &mut self.rom)),
             GamePakSram => Some((naddr, &mut self.gram)),
             _ => None,
