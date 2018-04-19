@@ -56,7 +56,10 @@ impl<'a> Gba<'a> {
             ptr::write(&mut gba.canvas, window.into_canvas().build().unwrap());
             gba.canvas.set_logical_size(240, 160).unwrap();
             ptr::write(&mut gba.texture_creator, gba.canvas.texture_creator());
-            info!("Default pixel format: {:?}", gba.texture_creator.default_pixel_format());
+            info!(
+                "Default pixel format: {:?}",
+                gba.texture_creator.default_pixel_format()
+            );
             ptr::write(
                 &mut gba.texture,
                 mem::transmute(

@@ -12,20 +12,12 @@ enum MemoryRange {
     Bios,
     BoardWram,
     ChipWram,
+    IoRegister,
     VideoRam,
     GamePakRom,
     GamePakSram,
     Unused,
 }
-
-const RANGES: [MemoryRange; 6] = [
-    MemoryRange::Bios,
-    MemoryRange::BoardWram,
-    MemoryRange::ChipWram,
-    MemoryRange::VideoRam,
-    MemoryRange::GamePakRom,
-    MemoryRange::GamePakSram,
-];
 
 impl MemoryRange {
     #[inline]
@@ -36,6 +28,7 @@ impl MemoryRange {
             Bios        => (0x00000000, 0x00004000),
             BoardWram   => (0x02000000, 0x02040000),
             ChipWram    => (0x03000000, 0x03008000),
+            IoRegister  => (0x04000000, 0x04008004),
             VideoRam    => (0x06000000, 0x06018000),
             GamePakRom  => (0x08000000, 0x0E000000),
             GamePakSram => (0x0E000000, 0x0E010000),
@@ -48,6 +41,13 @@ impl MemoryRange {
         match *self {
             BoardWram => addr & 0x3ffff, // mirroring
             ChipWram => addr & 0x7fff,
+            IoRegister => {
+                if addr & 0xffff == 0x800 {
+                    0x800 // only mirrored register
+                } else {
+                    addr & 0xffffff
+                }
+            }
             VideoRam => {
                 // Weird mirroring here
                 let chunk = addr & 0x1ffff;
@@ -70,6 +70,7 @@ impl MemoryRange {
             0x0 => Bios,
             0x2 => BoardWram,
             0x3 => ChipWram,
+            0x4 => IoRegister,
             0x6 => VideoRam,
             0x8 | 0x9 | 0xA | 0xB | 0xC | 0xD => GamePakRom,
             0xE => GamePakSram,
@@ -108,6 +109,7 @@ impl Gba {
         match range {
             BoardWram => Some((naddr, &self.bram)),
             ChipWram => Some((naddr, &self.cram)),
+            IoRegister => Some((naddr, &*self.io)),
             VideoRam => Some((naddr, &self.vram)),
             GamePakRom => Some((naddr, &self.rom)),
             GamePakSram => Some((naddr, &self.gram)),
@@ -122,6 +124,7 @@ impl Gba {
         match range {
             BoardWram => Some((naddr, &mut self.bram)),
             ChipWram => Some((naddr, &mut self.cram)),
+            IoRegister => Some((naddr, &mut *self.io)),
             VideoRam => Some((naddr, &mut self.vram)),
             GamePakRom => Some((naddr, &mut self.rom)),
             GamePakSram => Some((naddr, &mut self.gram)),

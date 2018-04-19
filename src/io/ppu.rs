@@ -76,11 +76,6 @@ impl<'a> Ppu<'a> {
                     let colour = self.vram.load16(idx as u32 * 2);
                     let (r, g, b) = colour16_rgb(colour);
 
-                    // fixme: remove
-                    if self.row == 80 && self.col == 120 {
-                        error!("{:#x}", colour);
-                    }
-
                     self.pixels[idx * PIX_BYTES + 0] = b;
                     self.pixels[idx * PIX_BYTES + 1] = g;
                     self.pixels[idx * PIX_BYTES + 2] = r;
@@ -88,7 +83,6 @@ impl<'a> Ppu<'a> {
                 6 | 7 => warn!("invalid mode"),
                 _ => {}
             }
-            self.pixels[idx * PIX_BYTES + 1] = 0xff;
         }
 
         self.delay = 3;
@@ -100,14 +94,17 @@ impl<'a> Ppu<'a> {
             if self.row == 228 {
                 // wrap around, blit our image to the texture
                 let pixels = Shared::new(&mut self.pixels);
-                self.texture.with_lock(None, | buf, pitch | {
-                    for row in 0..160 {
+                self.texture.with_lock(
+                    None,
+                    |buf, pitch| for row in 0..160 {
                         let buf_start = row * pitch;
                         let pix_start = row * ROW_BYTES;
-                        buf[buf_start..buf_start+ROW_BYTES]
-                            .clone_from_slice(&pixels[pix_start..pix_start+ROW_BYTES]);
-                    }
-                });
+                        buf[buf_start..buf_start + ROW_BYTES].clone_from_slice(
+                            &pixels
+                                [pix_start..pix_start + ROW_BYTES],
+                        );
+                    },
+                );
 
                 self.row = 0;
             }
