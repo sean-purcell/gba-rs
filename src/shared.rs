@@ -10,11 +10,11 @@ pub struct Shared<T> {
 }
 
 impl<T> Shared<T> {
-    pub fn empty() -> Shared<T> {
+    pub fn empty() -> Self {
         Shared { t: ptr::null_mut() }
     }
 
-    pub fn new(val: &mut T) -> Shared<T> {
+    pub fn new(val: &mut T) -> Self {
         Shared { t: val as *mut T }
     }
 }

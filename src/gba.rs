@@ -33,14 +33,14 @@ pub struct Gba<'a> {
     texture_creator: TextureCreator<WindowContext>,
     texture: Texture<'a>,
 
-    cpu: Cpu<GbaMmu>,
-    mmu: GbaMmu,
-    io: IoReg,
+    cpu: Cpu<GbaMmu<'a>>,
+    mmu: GbaMmu<'a>,
+    io: IoReg<'a>,
     ppu: Ppu<'a>,
 }
 
 impl<'a> Gba<'a> {
-    pub fn new(rom: GameRom) -> Box<Gba<'a>> {
+    pub fn new(rom: GameRom) -> Box<Self> {
         unsafe {
             let mut gba: Box<Gba> = Box::new(mem::uninitialized());
 
@@ -85,9 +85,12 @@ impl<'a> Gba<'a> {
                 Ppu::new(
                     Shared::new(&mut gba.texture),
                     Shared::new(&mut gba.io),
-                    Shared::new(&mut gba.mmu.vram),
+                    Shared::new(&mut gba.mmu),
                 ),
             );
+            let ppu = Shared::new(&mut gba.ppu);
+            gba.io.init(ppu);
+
 
             gba
         }

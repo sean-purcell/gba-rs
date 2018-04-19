@@ -13,7 +13,9 @@ enum MemoryRange {
     BoardWram,
     ChipWram,
     IoRegister,
+    Palette,
     VideoRam,
+    ObjectAttr,
     GamePakRom,
     GamePakSram,
     Unused,
@@ -29,7 +31,9 @@ impl MemoryRange {
             BoardWram   => (0x02000000, 0x02040000),
             ChipWram    => (0x03000000, 0x03008000),
             IoRegister  => (0x04000000, 0x04008004),
+            Palette     => (0x05000000, 0x05000400),
             VideoRam    => (0x06000000, 0x06018000),
+            ObjectAttr  => (0x07000000, 0x07000400),
             GamePakRom  => (0x08000000, 0x0E000000),
             GamePakSram => (0x0E000000, 0x0E010000),
             Unused      => (0x00000000, 0xFFFFFFFF),
@@ -48,6 +52,7 @@ impl MemoryRange {
                     addr & 0xffffff
                 }
             }
+            Palette => addr & 0x3ff,
             VideoRam => {
                 // Weird mirroring here
                 let chunk = addr & 0x1ffff;
@@ -58,6 +63,7 @@ impl MemoryRange {
                     chunk - 0x8000
                 }
             }
+            ObjectAttr => addr & 0x3ff,
             GamePakRom => addr & 0x1ffffff,
             _ => addr - self.bounds().0,
         }
@@ -71,7 +77,9 @@ impl MemoryRange {
             0x2 => BoardWram,
             0x3 => ChipWram,
             0x4 => IoRegister,
+            0x5 => Palette,
             0x6 => VideoRam,
+            0x7 => ObjectAttr,
             0x8 | 0x9 | 0xA | 0xB | 0xC | 0xD => GamePakRom,
             0xE => GamePakSram,
             _ => MemoryRange::Unused,
@@ -80,22 +88,26 @@ impl MemoryRange {
 }
 
 /// Implements the memory mapping for a GBA system
-pub struct Gba {
+pub struct Gba<'a> {
     pub bram: Ram,
     pub cram: Ram,
+    pub pram: Ram,
     pub vram: Ram,
+    pub oam: Ram,
     pub rom: GameRom,
     pub gram: Ram,
 
-    io: Shared<IoReg>,
+    io: Shared<IoReg<'a>>,
 }
 
-impl Gba {
-    pub fn new(rom: GameRom, io: Shared<IoReg>) -> Gba {
+impl<'a> Gba<'a> {
+    pub fn new(rom: GameRom, io: Shared<IoReg<'a>>) -> Gba {
         Gba {
             bram: Ram::new(256 * 1024),
             cram: Ram::new(32 * 1024),
+            pram: Ram::new(1024),
             vram: Ram::new(128 * 1024),
+            oam: Ram::new(1024),
             rom: rom,
             gram: Ram::new(64 * 1024),
             io: io,
@@ -110,7 +122,9 @@ impl Gba {
             BoardWram => Some((naddr, &self.bram)),
             ChipWram => Some((naddr, &self.cram)),
             IoRegister => Some((naddr, &*self.io)),
+            Palette => Some((naddr, &self.pram)),
             VideoRam => Some((naddr, &self.vram)),
+            ObjectAttr => Some((naddr, &self.oam)),
             GamePakRom => Some((naddr, &self.rom)),
             GamePakSram => Some((naddr, &self.gram)),
             _ => None,
@@ -125,7 +139,9 @@ impl Gba {
             BoardWram => Some((naddr, &mut self.bram)),
             ChipWram => Some((naddr, &mut self.cram)),
             IoRegister => Some((naddr, &mut *self.io)),
+            Palette => Some((naddr, &mut self.pram)),
             VideoRam => Some((naddr, &mut self.vram)),
+            ObjectAttr => Some((naddr, &mut self.oam)),
             GamePakRom => Some((naddr, &mut self.rom)),
             GamePakSram => Some((naddr, &mut self.gram)),
             _ => None,
@@ -133,11 +149,7 @@ impl Gba {
     }
 }
 
-fn warning(addr: u32) {
-    warn!("Access to unmapped memory: {:#010x}", addr);
-}
-
-impl Mmu for Gba {
+impl<'a> Mmu for Gba<'a> {
     #[inline]
     fn load8(&self, addr: u32) -> u8 {
         match self.get_range(addr) {
@@ -194,4 +206,8 @@ impl Mmu for Gba {
             None => warning(addr),
         }
     }
+}
+
+fn warning(addr: u32) {
+    warn!("Access to unmapped memory: {:#010x}", addr);
 }

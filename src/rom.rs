@@ -53,7 +53,11 @@ where
 impl Mmu for GameRom {
     #[inline]
     fn load8(&self, addr: u32) -> u8 {
-        self.deref().load8(addr)
+        if addr < (self.rom.len() as u32) {
+            self.deref().load8(addr)
+        } else {
+            0
+        }
     }
 
     #[inline]
@@ -63,7 +67,11 @@ impl Mmu for GameRom {
 
     #[inline]
     fn load16(&self, addr: u32) -> u16 {
-        self.deref().load16(addr)
+        if addr < (self.rom.len() as u32) {
+            self.deref().load16(addr)
+        } else {
+            0
+        }
     }
 
     #[inline]
@@ -73,7 +81,11 @@ impl Mmu for GameRom {
 
     #[inline]
     fn load32(&self, addr: u32) -> u32 {
-        self.deref().load32(addr)
+        if addr < (self.rom.len() as u32) {
+            self.deref().load32(addr)
+        } else {
+            0
+        }
     }
 
     #[inline]
