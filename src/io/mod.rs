@@ -11,13 +11,7 @@ pub struct IoReg {
 
 impl IoReg {
     pub fn new() -> IoReg {
-        let mut reg = IoReg { reg: Ram::new(IO_REG_SIZE) };
-
-        reg
-    }
-
-    fn init(&mut self) {
-        unimplemented!();
+        IoReg { reg: Ram::new(IO_REG_SIZE) }
     }
 
     fn get_priv(&self, addr: u32) -> u16 {

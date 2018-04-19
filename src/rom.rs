@@ -11,7 +11,6 @@ use GBAError;
 use Result;
 
 pub struct GameRom {
-    file: File,
     rom: Mmap,
 }
 
@@ -21,7 +20,6 @@ impl GameRom {
             Ok(file) => {
                 match unsafe { Mmap::map(&file) } {
                     Ok(mmap) => Ok(GameRom {
-                        file: file,
                         rom: mmap,
                     }),
                     Err(err) => Err(GBAError::RomLoadError(err)),

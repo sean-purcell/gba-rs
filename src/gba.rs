@@ -19,7 +19,6 @@ use Result;
 use cpu::Cpu;
 use io::IoReg;
 use io::ppu::Ppu;
-use mmu::Mmu;
 use mmu::gba::Gba as GbaMmu;
 use rom::GameRom;
 
@@ -118,20 +117,21 @@ impl<'a> Gba<'a> {
                 break;
             }
 
-            let now = Instant::now();
-            info!("{} fps", 1_000_000_000u32 / ((now - start).subsec_nanos()));
             let end = Instant::now();
             if end < prev_time + frame_duration {
                 let sleep_time = (prev_time + frame_duration) - end;
-                //thread::sleep(sleep_time);
+                thread::sleep(sleep_time);
             }
             prev_time = prev_time + frame_duration;
+
+            let now = Instant::now();
+            info!("{} fps", 1_000_000_000u32 / ((now - start).subsec_nanos()));
         }
         Ok(())
     }
 
     fn emulate_frame(&mut self) {
-        for i in 0..CYCLES_PER_FRAME {
+        for _ in 0..CYCLES_PER_FRAME {
             self.cycle();
         }
     }

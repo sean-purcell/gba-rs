@@ -1,5 +1,3 @@
-use std::mem;
-
 use sdl2::render::Texture;
 
 use bit_util::extract;
@@ -104,7 +102,7 @@ impl<'a> Ppu<'a> {
                                 [pix_start..pix_start + ROW_BYTES],
                         );
                     },
-                );
+                ).unwrap();
 
                 self.row = 0;
             }
