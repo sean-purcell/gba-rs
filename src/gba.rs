@@ -94,6 +94,7 @@ impl<'a> Gba<'a> {
         loop {
             let _guard = flame::start_guard("frame cycle");
             let start = Instant::now();
+            
             use flame;
             flame::span_of("frame emu", || self.emulate_frame());
             flame::span_of("frame copy", || self.canvas.copy(&self.texture, None, None).unwrap());
@@ -109,7 +110,7 @@ impl<'a> Gba<'a> {
             info!("{} fps", 1_000_000_000u32 / ((now - start).subsec_nanos()));
             let end = Instant::now();
             if end < prev_time + frame_duration {
-                let sleep_time = frame_duration - (end - prev_time);
+                let sleep_time = (prev_time + frame_duration) - end;
                 //thread::sleep(sleep_time);
             }
             prev_time = prev_time + frame_duration;

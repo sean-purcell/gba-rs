@@ -86,9 +86,7 @@ impl Mmu for GameRom {
 
 impl fmt::Debug for GameRom {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
-        use std::os::unix::io::AsRawFd;
         fmt.debug_struct("GameRom")
-            .field("fd", &self.file.as_raw_fd())
             .field("len", &self.rom.len())
             .field("ptr", &self.rom.as_ptr())
             .field("val", &format!("{:#x}", self.rom[0xb2]))

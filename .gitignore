@@ -2,5 +2,6 @@
 **/*.rs.bk
 
 roms/
+/*.dll
 
 .*.sw*

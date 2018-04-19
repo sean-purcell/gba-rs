@@ -36,8 +36,6 @@ fn main() {
             }
         }
     }
-
-    flame::dump_html(&mut File::create("flame-graph.html").unwrap()).unwrap();
 }
 
 #[derive(Debug)]
@@ -55,9 +53,24 @@ fn run_emu() -> Result<()> {
         .arg(Arg::with_name("rom").required(true).help(
             "ROM file to emulate",
         ))
+        .arg(Arg::with_name("profile")
+            .short("p")
+            .long("profile")
+            .required(false)
+            .takes_value(true)
+            .value_name("mode")
+            .possible_values(&["file", "html"]))
         .get_matches();
 
-    run_gba(app_m.value_of_os("rom").unwrap())
+    let res = run_gba(app_m.value_of_os("rom").unwrap());
+
+    match app_m.value_of("profile") {
+        Some("html") => flame::dump_html(&mut File::create("flame-graph.html").unwrap()).unwrap(),
+        Some("file") => flame::dump_text_to_writer(&mut File::create("flame-graph.txt").unwrap()).unwrap(),
+        _ => (),
+    };
+
+    res
 }
 
 fn run_gba(path: &OsStr) -> Result<()> {
