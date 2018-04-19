@@ -4,6 +4,8 @@ use std::ptr;
 use std::time::{Duration, Instant};
 use std::thread;
 
+use flame;
+
 use sdl2;
 use sdl2::Sdl;
 use sdl2::pixels::PixelFormatEnum;
@@ -46,7 +48,7 @@ impl<'a> Gba<'a> {
             ptr::write(&mut gba.ctx, sdl2::init().unwrap());
             let video = gba.ctx.video().unwrap();
             let window = video
-                .window("GBA", 480, 320)
+                .window("GBA", 720, 480)
                 .position_centered()
                 .build()
                 .unwrap();
@@ -54,7 +56,7 @@ impl<'a> Gba<'a> {
             ptr::write(&mut gba.canvas, window.into_canvas().build().unwrap());
             gba.canvas.set_logical_size(240, 160).unwrap();
             ptr::write(&mut gba.texture_creator, gba.canvas.texture_creator());
-            info!("Format: {:?}", gba.texture_creator.default_pixel_format());
+            info!("Default pixel format: {:?}", gba.texture_creator.default_pixel_format());
             ptr::write(
                 &mut gba.texture,
                 mem::transmute(
@@ -101,7 +103,6 @@ impl<'a> Gba<'a> {
             let _guard = flame::start_guard("frame cycle");
             let start = Instant::now();
 
-            use flame;
             flame::span_of("frame emu", || self.emulate_frame());
             flame::span_of("frame copy", || {
                 self.canvas.copy(&self.texture, None, None).unwrap()
