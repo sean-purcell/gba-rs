@@ -55,10 +55,14 @@ impl<'a> Gba<'a> {
             gba.canvas.set_logical_size(240, 160).unwrap();
             ptr::write(&mut gba.texture_creator, gba.canvas.texture_creator());
             info!("Format: {:?}", gba.texture_creator.default_pixel_format());
-            ptr::write(&mut gba.texture, mem::transmute(gba.texture_creator
-                                                        .create_texture_streaming(
-                    PixelFormatEnum::RGB888,
-                    240, 160).unwrap()));
+            ptr::write(
+                &mut gba.texture,
+                mem::transmute(
+                    gba.texture_creator
+                        .create_texture_streaming(PixelFormatEnum::RGB888, 240, 160)
+                        .unwrap(),
+                ),
+            );
 
             ptr::write(&mut gba.io, IoReg::new());
             ptr::write(&mut gba.mmu, GbaMmu::new(rom, Shared::new(&mut gba.io)));
@@ -88,16 +92,20 @@ impl<'a> Gba<'a> {
     pub fn run(&mut self) -> Result<()> {
         let mut event_pump = self.ctx.event_pump().unwrap();
 
-        let frame_duration = Duration::new(0,
-            ((1_000_000_000u64 * CYCLES_PER_FRAME) / CYCLES_PER_SEC) as u32);
+        let frame_duration = Duration::new(
+            0,
+            ((1_000_000_000u64 * CYCLES_PER_FRAME) / CYCLES_PER_SEC) as u32,
+        );
         let mut prev_time = Instant::now();
         loop {
             let _guard = flame::start_guard("frame cycle");
             let start = Instant::now();
-            
+
             use flame;
             flame::span_of("frame emu", || self.emulate_frame());
-            flame::span_of("frame copy", || self.canvas.copy(&self.texture, None, None).unwrap());
+            flame::span_of("frame copy", || {
+                self.canvas.copy(&self.texture, None, None).unwrap()
+            });
             flame::span_of("frame present", || self.canvas.present());
 
             event_pump.pump_events();
