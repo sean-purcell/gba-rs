@@ -16,10 +16,19 @@ pub struct IoReg<'a> {
 
 impl<'a> IoReg<'a> {
     pub fn new() -> Self {
-        IoReg {
+        let mut io = IoReg {
             reg: Ram::new(IO_REG_SIZE),
             ppu: Shared::empty(),
-        }
+        };
+        io.set_initial();
+        io
+    }
+
+    fn set_initial(&mut self) {
+        self.reg.set16(0x20, 0x100);
+        self.reg.set16(0x26, 0x100);
+        self.reg.set16(0x30, 0x100);
+        self.reg.set16(0x36, 0x100);
     }
 
     pub fn init(&mut self, ppu: Shared<Ppu<'a>>) {
