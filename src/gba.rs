@@ -19,7 +19,7 @@ use Result;
 
 use cpu::Cpu;
 use io::IoReg;
-use io::ppu::Ppu;
+use io::ppu::{Ppu, ROWS, COLS};
 use mmu::gba::Gba as GbaMmu;
 use rom::GameRom;
 
@@ -68,7 +68,7 @@ impl<'a> Gba<'a> {
                 .unwrap();
 
             ptr::write(&mut gba.canvas, window.into_canvas().build().unwrap());
-            gba.canvas.set_logical_size(240, 160).unwrap();
+            gba.canvas.set_logical_size(COLS, ROWS).unwrap();
             ptr::write(&mut gba.texture_creator, gba.canvas.texture_creator());
             info!(
                 "Default pixel format: {:?}",
@@ -78,7 +78,7 @@ impl<'a> Gba<'a> {
                 &mut gba.texture,
                 mem::transmute(
                     gba.texture_creator
-                        .create_texture_streaming(PixelFormatEnum::RGB888, 240, 160)
+                        .create_texture_streaming(PixelFormatEnum::RGB888, COLS, ROWS)
                         .unwrap(),
                 ),
             );
