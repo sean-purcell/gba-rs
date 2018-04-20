@@ -1,0 +1,6 @@
+# Stolen from daniel5151/ANESE
+# Exclude test-roms from GitHub language statistics
+test_roms/* linguist-documentation
+
+# Explore research too
+reference/* linguist-documentation
