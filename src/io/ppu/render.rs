@@ -24,7 +24,7 @@ impl<'a> Ppu<'a> {
             let off = idx as usize * PIX_BYTES;
             let colour = colour16_rgb(self.state.line[x as usize] as u16);
             let rgb = colour_pack(colour);
-            LittleEndian::write_u32(&mut self.pixels[off..off+PIX_BYTES], rgb);
+            LittleEndian::write_u32(&mut self.pixels[off..off + PIX_BYTES], rgb);
         }
     }
 
@@ -109,7 +109,6 @@ impl<'a> Ppu<'a> {
         )
     }
     */
-
 }
 
 pub(super) struct RenderState {
@@ -157,9 +156,16 @@ fn colour16_rgb(colour: u16) -> (u8, u8, u8) {
 }
 
 fn colour_pack(colour: Colour) -> u32 {
-    (
-        (colour.0 as u32) << 16 |
-        (colour.1 as u32) << 8 |
-        (colour.2 as u32)
-    )
+    ((colour.0 as u32) << 16 | (colour.1 as u32) << 8 | (colour.2 as u32))
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    #[test]
+    fn test_colourconvert() {
+        assert_eq!((0xf8, 0, 0), colour16_rgb(0x1f));
+        assert_eq!((0, 0xf8, 0), colour16_rgb(0x3e0));
+        assert_eq!((0, 0, 0xf8), colour16_rgb(0x7c00));
+    }
 }

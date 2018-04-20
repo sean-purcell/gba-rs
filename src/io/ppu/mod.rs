@@ -99,14 +99,3 @@ impl<'a> Ppu<'a> {
 
     pub fn update_bg3ref(&mut self) {}
 }
-
-#[cfg(test)]
-mod test {
-    use super::*;
-    #[test]
-    fn test_colourconvert() {
-        assert_eq!((0xf8, 0, 0), colour16_rgb(0x1f));
-        assert_eq!((0, 0xf8, 0), colour16_rgb(0x3e0));
-        assert_eq!((0, 0, 0xf8), colour16_rgb(0x7c00));
-    }
-}
