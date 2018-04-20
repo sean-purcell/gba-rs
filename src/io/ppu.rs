@@ -9,14 +9,9 @@ use shared::Shared;
 use super::IoReg;
 
 #[derive(Clone, Copy, Debug)]
-struct RotScale {
+struct ScaleRef {
     xref: u32,
     yref: u32,
-
-    dx: u16,
-    dmx: u16,
-    dy: u16,
-    dmy: u16,
 }
 
 const PIX_BYTES: usize = 4;
