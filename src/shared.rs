@@ -24,7 +24,7 @@ impl<T> Deref for Shared<T> {
 
     fn deref(&self) -> &T {
         if self.t.is_null() {
-            panic!("Dereferencing uninitialized shared");
+            unreachable!("Dereferencing uninitialized shared");
         }
         unsafe { &(*self.t) }
     }

@@ -19,9 +19,7 @@ impl GameRom {
         match File::open(path) {
             Ok(file) => {
                 match unsafe { Mmap::map(&file) } {
-                    Ok(mmap) => Ok(GameRom {
-                        rom: mmap,
-                    }),
+                    Ok(mmap) => Ok(GameRom { rom: mmap }),
                     Err(err) => Err(GBAError::RomLoadError(err)),
                 }
             }

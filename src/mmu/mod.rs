@@ -75,7 +75,7 @@ impl<'a> Mmu for &'a [u8] {
 
     #[inline]
     fn set8(&mut self, _addr: u32, _val: u8) {
-        panic!()
+        unreachable!()
     }
 
     #[inline]
@@ -87,7 +87,7 @@ impl<'a> Mmu for &'a [u8] {
 
     #[inline]
     fn set16(&mut self, _addr: u32, _val: u16) {
-        panic!()
+        unreachable!()
     }
 
     #[inline]
@@ -99,6 +99,6 @@ impl<'a> Mmu for &'a [u8] {
 
     #[inline]
     fn set32(&mut self, _addr: u32, _val: u32) {
-        panic!()
+        unreachable!()
     }
 }

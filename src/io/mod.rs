@@ -39,11 +39,7 @@ impl<'a> IoReg<'a> {
     #[inline]
     fn set(&mut self, addr: u32, val: u16) {
         let ro = ro_mask(addr);
-        let old = if ro != 0 {
-            self.get_priv(addr)
-        } else {
-            0
-        };
+        let old = if ro != 0 { self.get_priv(addr) } else { 0 };
         let nval = (ro & old) | (!ro & val);
         self.reg.set16(addr, nval);
 

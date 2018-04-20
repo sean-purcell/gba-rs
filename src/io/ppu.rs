@@ -30,7 +30,11 @@ pub struct Ppu<'a> {
 type Colour = (u8, u8, u8);
 
 impl<'a> Ppu<'a> {
-    pub fn new(texture: Shared<Texture<'a>>, io: Shared<IoReg<'a>>, mmu: Shared<GbaMmu<'a>>) -> Self {
+    pub fn new(
+        texture: Shared<Texture<'a>>,
+        io: Shared<IoReg<'a>>,
+        mmu: Shared<GbaMmu<'a>>,
+    ) -> Self {
         Ppu {
             texture: texture,
             pixels: [0u8; FRAME_BYTES],
@@ -53,8 +57,10 @@ impl<'a> Ppu<'a> {
 
             let (r, g, b) = self.compute_colour();
 
-            LittleEndian::write_u32(&mut self.pixels[idx..idx + PIX_BYTES],
-                                    (b as u32) | ((g as u32) << 8) | ((r as u32) << 16));
+            LittleEndian::write_u32(
+                &mut self.pixels[idx..idx + PIX_BYTES],
+                (b as u32) | ((g as u32) << 8) | ((r as u32) << 16),
+            );
         }
 
         self.delay = 3;
@@ -78,11 +84,12 @@ impl<'a> Ppu<'a> {
         // compute background colour
         let bg = match extract(dspcnt, 0, 3) {
             // mode
-            3 => {
-                self.get_colour_bg2()
+            3 => self.get_colour_bg2(),
+            6 | 7 => {
+                warn!("invalid mode");
+                (0, 0, 0)
             }
-            6 | 7 => { warn!("invalid mode"); (0,0,0) },
-            _ => (0,0,0),
+            _ => (0, 0, 0),
         };
         bg
 
@@ -97,30 +104,25 @@ impl<'a> Ppu<'a> {
     fn vblank_end(&mut self) {
         // wrap around, blit our image to the texture
         let pixels = Shared::new(&mut self.pixels);
-        self.texture.with_lock(
-            None,
-            |buf, pitch| for row in 0..160 {
+        self.texture
+            .with_lock(None, |buf, pitch| for row in 0..160 {
                 let buf_start = row * pitch;
                 let pix_start = row * ROW_BYTES;
                 buf[buf_start..buf_start + ROW_BYTES].clone_from_slice(
                     &pixels
                         [pix_start..pix_start + ROW_BYTES],
                 );
-            },
-        ).unwrap();
+            })
+            .unwrap();
     }
 
     fn hblank_end(&mut self) {
         self.io.set_priv(0x6, self.row as u16);
     }
 
-    pub fn update_bg2ref(&mut self) {
+    pub fn update_bg2ref(&mut self) {}
 
-    }
-
-    pub fn update_bg3ref(&mut self) {
-
-    }
+    pub fn update_bg3ref(&mut self) {}
 }
 
 fn colour16_rgb(colour: u16) -> (u8, u8, u8) {
