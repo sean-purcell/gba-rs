@@ -1,4 +1,5 @@
 use std::boxed::Box;
+use std::default::Default;
 use std::mem;
 use std::ptr;
 use std::time::{Duration, Instant};
@@ -25,8 +26,21 @@ use rom::GameRom;
 const CYCLES_PER_SEC: u64 = 16 * 1024 * 1024;
 const CYCLES_PER_FRAME: u64 = 280896;
 
+#[derive(Copy, Clone, Debug)]
+pub struct Options {
+    pub fps_limit: bool,
+}
+
+impl Default for Options {
+    fn default() -> Self {
+        Options { fps_limit: true }
+    }
+}
+
 /// Parent container for all components of the system
 pub struct Gba<'a> {
+    opts: Options,
+
     pub ctx: Sdl,
 
     canvas: Canvas<Window>,
@@ -40,9 +54,10 @@ pub struct Gba<'a> {
 }
 
 impl<'a> Gba<'a> {
-    pub fn new(rom: GameRom) -> Box<Self> {
+    pub fn new(rom: GameRom, options: Options) -> Box<Self> {
         unsafe {
             let mut gba: Box<Gba> = Box::new(mem::uninitialized());
+            ptr::write(&mut gba.opts, options);
 
             ptr::write(&mut gba.ctx, sdl2::init().unwrap());
             let video = gba.ctx.video().unwrap();
@@ -121,9 +136,11 @@ impl<'a> Gba<'a> {
             }
 
             let end = Instant::now();
-            if end < prev_time + frame_duration {
-                let sleep_time = (prev_time + frame_duration) - end;
-                thread::sleep(sleep_time);
+            if self.opts.fps_limit {
+                if end < prev_time + frame_duration {
+                    let sleep_time = (prev_time + frame_duration) - end;
+                    thread::sleep(sleep_time);
+                }
             }
             prev_time = prev_time + frame_duration;
 

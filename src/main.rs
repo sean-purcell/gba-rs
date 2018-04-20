@@ -8,11 +8,12 @@ extern crate sdl2;
 
 extern crate flame;
 
+use std::default::Default;
 use std::fs::File;
 use std::ffi::OsStr;
 use std::path::Path;
 
-use clap::{App, Arg};
+use clap::{App, Arg, ArgMatches};
 
 mod bit_util;
 mod shared;
@@ -62,9 +63,19 @@ fn run_emu() -> Result<()> {
                 .value_name("mode")
                 .possible_values(&["file", "html"]),
         )
+        .arg(
+            Arg::with_name("fps-limit")
+                .short("f")
+                .long("fps-limit")
+                .required(false)
+                .takes_value(true)
+                .value_name("bool")
+                .possible_values(&["true", "false"])
+                .default_value("true"),
+        )
         .get_matches();
 
-    let res = run_gba(app_m.value_of_os("rom").unwrap());
+    let res = run_gba(&app_m);
 
     match app_m.value_of("profile") {
         Some("html") => flame::dump_html(&mut File::create("flame-graph.html").unwrap()).unwrap(),
@@ -77,12 +88,17 @@ fn run_emu() -> Result<()> {
     res
 }
 
-fn run_gba(path: &OsStr) -> Result<()> {
-    let path = Path::new(path);
+fn run_gba(app_m: &ArgMatches) -> Result<()> {
+    let path = Path::new(app_m.value_of_os("rom").unwrap());
 
     let rom = rom::GameRom::new(&path)?;
 
-    let mut gba = gba::Gba::new(rom);
+    let opts = gba::Options {
+        fps_limit: app_m.value_of("fps-limit").unwrap() == "true",
+        ..Default::default()
+    };
+
+    let mut gba = gba::Gba::new(rom, opts);
 
     /*
     gba.run();
