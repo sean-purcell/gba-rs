@@ -10,7 +10,6 @@ extern crate flame;
 
 use std::default::Default;
 use std::fs::File;
-use std::ffi::OsStr;
 use std::path::Path;
 
 use clap::{App, Arg, ArgMatches};
