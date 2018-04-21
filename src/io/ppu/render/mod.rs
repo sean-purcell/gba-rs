@@ -192,6 +192,17 @@ fn in_win_vert(winv: u16, row: u32) -> bool {
         }
 }
 
+fn in_win_hori(winh: u16, col: u32) -> bool {
+    let x1 = (winh >> 8) as u32;
+    let x2 = (winh & 0xff) as u32;
+
+    if x1 <= x2 {
+        col >= x1 && col < x2
+    } else {
+        col >= x1 || col < x2
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
