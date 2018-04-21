@@ -1,3 +1,11 @@
+// Unimplemented rendering features:
+// All modes
+// Sprites
+// Fast access mode
+// Mosaic
+
+use std::ops::{Deref, DerefMut};
+
 use byteorder::{ByteOrder, LittleEndian};
 
 use bit_util::{bit, extract, sign_extend};
@@ -5,7 +13,10 @@ use mmu::Mmu;
 
 use super::{Ppu, COLS, ROWS, PIX_BYTES};
 
-type Colour = (u8, u8, u8);
+mod rotscale;
+mod mode3;
+
+const TRANSPARENT: u32 = 0xf0000000;
 
 impl<'a> Ppu<'a> {
     /// Renders the current line into the line field in state
@@ -25,16 +36,6 @@ impl<'a> Ppu<'a> {
             let colour = colour16_rgb(self.state.line[x as usize] as u16);
             let rgb = colour_pack(colour);
             LittleEndian::write_u32(&mut self.pixels[off..off + PIX_BYTES], rgb);
-        }
-    }
-
-    fn render_line_mode3(&mut self, row: u32, dspcnt: u16) {
-        for x in 0..COLS {
-            let idx = row * COLS + x;
-            self.state.line[x as usize] = self.mmu.vram.load16(idx * 2) as u32;
-            if self.state.line[x as usize] != 0 {
-                error!("{} {} {:#x}", x, row, self.state.line[x as usize]);
-            }
         }
     }
 
@@ -111,39 +112,58 @@ impl<'a> Ppu<'a> {
     */
 }
 
-pub(super) struct RenderState {
-    // Stealing a trick from VBA: upper bits are priority
-    line0: [u32; COLS as usize],
-    line1: [u32; COLS as usize],
-    line2: [u32; COLS as usize],
-    line3: [u32; COLS as usize],
-    lineo: [u32; COLS as usize],
-    line_objwindow: [u32; COLS as usize],
-
-    line: [u32; COLS as usize],
+struct LineBuf {
+    a: [u32; COLS as usize],
 }
 
-impl Default for RenderState {
+impl Default for LineBuf {
     fn default() -> Self {
-        RenderState {
-            line0: [0; COLS as usize],
-            line1: [0; COLS as usize],
-            line2: [0; COLS as usize],
-            line3: [0; COLS as usize],
-            lineo: [0; COLS as usize],
-            line_objwindow: [0; COLS as usize],
-
-            line: [0; COLS as usize],
-        }
+        LineBuf { a: [0; COLS as usize] }
     }
 }
 
-enum Layer {
-    Bg0,
-    Bg1,
-    Bg2,
-    Bg3,
-    Obj,
+impl Deref for LineBuf {
+    type Target = [u32];
+    fn deref(&self) -> &[u32] {
+        &self.a
+    }
+}
+
+impl DerefMut for LineBuf {
+    fn deref_mut(&mut self) -> &mut [u32] {
+        &mut self.a
+    }
+}
+
+#[derive(Default)]
+pub(super) struct RenderState {
+    // Stealing a trick from VBA: upper bits are priority
+    line0: LineBuf,
+    line1: LineBuf,
+    line2: LineBuf,
+    line3: LineBuf,
+    lineo: LineBuf,
+    line_objwindow: LineBuf,
+
+    line: LineBuf,
+
+    pub(super) bg2ref: BgRef,
+    pub(super) bg3ref: BgRef,
+}
+
+#[derive(Default, Copy, Clone, Debug)]
+pub struct BgRef {
+    xref: u32,
+    yref: u32,
+}
+
+impl BgRef {
+    pub(super) fn new(xl: u16, xh: u16, yl: u16, yh: u16) -> Self {
+        Self {
+            xref: sign_extend((xl as u32) | ((xh as u32) << 16), 28),
+            yref: sign_extend((yl as u32) | ((yh as u32) << 16), 28),
+        }
+    }
 }
 
 fn colour16_rgb(colour: u16) -> (u8, u8, u8) {
@@ -155,8 +175,21 @@ fn colour16_rgb(colour: u16) -> (u8, u8, u8) {
     )
 }
 
-fn colour_pack(colour: Colour) -> u32 {
+fn colour_pack(colour: (u8, u8, u8)) -> u32 {
     ((colour.0 as u32) << 16 | (colour.1 as u32) << 8 | (colour.2 as u32))
+}
+
+fn in_win_vert(winv: u16, row: u32) -> bool {
+    let y1 = (winv >> 8) as u32;
+    let y2 = (winv & 0xff) as u32;
+
+    // logic here is weird, copying from vba
+    (y1 == y2 && y1 >= 0xe8) ||
+        if y1 <= y2 {
+            row >= y1 && row < y2
+        } else {
+            row >= y1 || row < y2
+        }
 }
 
 #[cfg(test)]

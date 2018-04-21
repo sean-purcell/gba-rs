@@ -131,7 +131,7 @@ mod test {
         let sval = val as i32;
         assert_eq!(0xff000000u32, (sval >> 4) as u32);
         assert_eq!(val, sval as u32);
-        assert_eq!(0xf000i16 as u32, 0xfffff000u32);
+        assert_eq!(0xf000u16 as i16 as u32, 0xfffff000u32);
     }
 
     #[test]

@@ -89,13 +89,31 @@ impl<'a> Ppu<'a> {
                 );
             })
             .unwrap();
+
+        // TODO: this is one cycle off from when it should actually happen probably
+        self.update_bg2ref();
+        self.update_bg3ref();
     }
 
     fn hblank_end(&mut self) {
         self.io.set_priv(0x6, self.row as u16);
     }
 
-    pub fn update_bg2ref(&mut self) {}
+    pub fn update_bg2ref(&mut self) {
+        let xl = self.io.get_priv(0x28);
+        let xh = self.io.get_priv(0x2a);
+        let yl = self.io.get_priv(0x2c);
+        let yh = self.io.get_priv(0x2e);
 
-    pub fn update_bg3ref(&mut self) {}
+        self.state.bg2ref = render::BgRef::new(xl, xh, yl, yh);
+    }
+
+    pub fn update_bg3ref(&mut self) {
+        let xl = self.io.get_priv(0x38);
+        let xh = self.io.get_priv(0x3a);
+        let yl = self.io.get_priv(0x3c);
+        let yh = self.io.get_priv(0x3e);
+
+        self.state.bg3ref = render::BgRef::new(xl, xh, yl, yh);
+    }
 }
