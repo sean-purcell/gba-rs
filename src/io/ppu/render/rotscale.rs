@@ -90,7 +90,9 @@ pub(super) fn render_rotscale_line(
     params: RotScaleParams,
     ctrl: BgControl,
 ) {
-    let prio = ctrl.priority() << 28;
+    // upper 8 bits are priority
+    // set bit 27 so OBJ will have lower priority here
+    let prio = (ctrl.priority() << 28) | (1 << 27);
 
     let base = ctrl.base_addr();
 

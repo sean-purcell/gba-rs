@@ -2,12 +2,14 @@ use std::cmp::min;
 
 use super::*;
 use super::rotscale::*;
+use super::object::*;
 
 impl<'a> Ppu<'a> {
     pub(super) fn render_line_mode3(&mut self, row: u32, dspcnt: u16) {
         let win_enable = extract(dspcnt as u32, 13, 3) != 0;
         let in_win0 = bit(dspcnt as u32, 13) == 1 && in_win_vert(self.io.get_priv(0x44), row);
         let in_win1 = bit(dspcnt as u32, 14) == 1 && in_win_vert(self.io.get_priv(0x46), row);
+        let in_wino = bit(dspcnt as u32, 15) == 1;
 
         // FIXME: bg2ref won't get updated if this is skipped, not sure
         // what the appropriate behaviour is
@@ -29,6 +31,16 @@ impl<'a> Ppu<'a> {
                 BgControl::Bitmap(dspcnt),
             );
         }
+        let objen = bit(dspcnt as u32, 12) == 1;
+        if objen {
+            render_obj_line(
+                &mut self.state.lineo,
+                &mut self.state.line_objwindow,
+                row,
+                &self.mmu,
+                dspcnt
+            );
+        }
 
         let winin = self.io.get_priv(0x48);
         let winout = self.io.get_priv(0x4a);
@@ -44,9 +56,7 @@ impl<'a> Ppu<'a> {
                 winin & 0xff
             } else if in_win1 && in_win_hori(win1h, x) {
                 winin >> 8
-            } else if false
-            /* FIXME: obj window */
-            {
+            } else if in_wino && self.state.line_objwindow[ux] != 0 {
                 winout & 0xff
             } else if win_enable {
                 winout >> 8
@@ -54,14 +64,15 @@ impl<'a> Ppu<'a> {
                 0xff
             } as u32;
 
-            // FIXME: objects
-
             // FIXME: special blend effects
             let mut colour = backdrop;
 
             if bg2en && bit(en_mask, 2) == 1 {
-                let nc = self.state.line2[ux];
-                colour = min(colour, nc);
+                colour = min(colour, self.state.line2[ux]);
+            }
+
+            if objen && bit(en_mask, 4) == 1 {
+                colour = min(colour, self.state.lineo[ux]);
             }
 
             self.state.line[ux] = colour;

@@ -14,6 +14,7 @@ use mmu::Mmu;
 use super::{Ppu, COLS, ROWS, PIX_BYTES};
 
 mod rotscale;
+mod object;
 mod mode3;
 
 const TRANSPARENT: u32 = 0xf0000000;
