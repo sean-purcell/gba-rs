@@ -5,3 +5,5 @@ roms/
 /*.dll
 
 .*.sw*
+
+flame-graph.*

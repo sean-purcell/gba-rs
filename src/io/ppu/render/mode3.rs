@@ -1,7 +1,7 @@
 use std::cmp::min;
 
 use super::*;
-use super::rotscale::*;
+use super::background::*;
 use super::object::*;
 
 impl<'a> Ppu<'a> {
@@ -28,7 +28,7 @@ impl<'a> Ppu<'a> {
                 &self.mmu,
                 &mut self.state.bg2ref,
                 rparams,
-                BgControl::Bitmap(dspcnt),
+                RotScaleCtrl::Bitmap(dspcnt),
             );
         }
         let objen = bit(dspcnt as u32, 12) == 1;
@@ -48,7 +48,7 @@ impl<'a> Ppu<'a> {
         let win0h = if in_win0 { self.io.get_priv(0x40) } else { 0 };
         let win1h = if in_win1 { self.io.get_priv(0x42) } else { 0 };
 
-        let backdrop = (self.mmu.pram.load16(0) as u32) | (0x4 << 28);
+        let backdrop = (self.mmu.pram.load16(0) as u32) | (0xe << 28);
 
         for x in 0..COLS {
             let ux = x as usize;

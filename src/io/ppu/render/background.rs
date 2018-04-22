@@ -21,17 +21,17 @@ impl RotScaleParams {
     }
 }
 
-pub enum BgControl {
+pub enum RotScaleCtrl {
     TileMap(u16),
     Bitmap(u16),
 }
 
-impl BgControl {
+impl RotScaleCtrl {
     #[inline]
     fn base_addr(&self) -> u32 {
-        use self::BgControl::*;
+        use self::RotScaleCtrl::*;
         match *self {
-            TileMap(x) => unimplemented!(),
+            TileMap(ctrl) => extract(ctrl as u32, 8, 5) * 2 * 1024,
             Bitmap(dspcnt) => {
                 let d = dspcnt as u32;
                 if extract(d, 0, 3) == 3 || bit(d, 4) == 0 {
@@ -44,17 +44,26 @@ impl BgControl {
     }
 
     #[inline]
-    fn priority(&self) -> u32 {
-        use self::BgControl::*;
+    fn tile_base_addr(&self) -> u32 {
+        use self::RotScaleCtrl::*;
         match *self {
-            TileMap(ctrl) => extract(ctrl as u32, 0, 2),
+            TileMap(ctrl) => extract(ctrl as u32, 2, 2) * 16 * 1024,
             Bitmap(dspcnt) => 0,
         }
     }
 
     #[inline]
+    fn priority(&self) -> u32 {
+        use self::RotScaleCtrl::*;
+        match *self {
+            TileMap(ctrl) => extract(ctrl as u32, 0, 2),
+            Bitmap(dspcnt) => 3,
+        }
+    }
+
+    #[inline]
     fn size(&self) -> (u32, u32) {
-        use self::BgControl::*;
+        use self::RotScaleCtrl::*;
         match *self {
             TileMap(ctrl) => {
                 let s = 128 * (1 << extract(ctrl as u32, 14, 2));
@@ -73,7 +82,7 @@ impl BgControl {
 
     #[inline]
     fn wrap(&self) -> bool {
-        use self::BgControl::*;
+        use self::RotScaleCtrl::*;
         match *self {
             TileMap(ctrl) => bit(ctrl as u32, 13) == 1,
             Bitmap(dspcnt) => false,
@@ -81,20 +90,21 @@ impl BgControl {
     }
 }
 
-// FIXME: make this function handle palettes
+// FIXME: mosaic
 pub(super) fn render_rotscale_line(
     line: &mut LineBuf,
     row: u32,
     mmu: &GbaMmu,
     bgref: &mut BgRef,
     params: RotScaleParams,
-    ctrl: BgControl,
+    ctrl: RotScaleCtrl,
 ) {
     // upper 8 bits are priority
     // set bit 27 so OBJ will have lower priority here
     let prio = (ctrl.priority() << 28) | (1 << 27);
 
     let base = ctrl.base_addr();
+    let tile_base = ctrl.tile_base_addr();
 
     let (xsize, ysize) = ctrl.size();
 
@@ -104,18 +114,36 @@ pub(super) fn render_rotscale_line(
         let nx = xval >> 8;
         let ny = yval >> 8;
 
-        let colour = if ctrl.wrap() {
-            let ix = nx % xsize;
-            let iy = ny % ysize;
-            (mmu.vram.load16((iy * xsize + ix) * 2) as u32) | prio
+        let (ix, iy) = if ctrl.wrap() {
+            (nx % xsize, ny % ysize)
         } else {
-            // unsigned
-            if nx < xsize && ny < ysize {
-                (mmu.vram.load16((ny * xsize + nx) * 2) as u32) | prio
-            } else {
-                TRANSPARENT
-            }
+            (nx, ny)
         };
+
+        let colour = if ix < xsize && iy < ysize {
+            match ctrl {
+                RotScaleCtrl::TileMap(_) => {
+                    let tile_idx = (ix / 8) + (iy / 8) * (xsize / 8);
+                    let addr = base + tile_idx;
+                    let tile = mmu.vram.load8(addr);
+                    // 256 colours / 1 palette
+                    // one tile is 64 bytes
+                    let px_idx = (ix % 8) + (iy % 8) * 8;
+                    let colour = mmu.vram.load8(tile_base + px_idx);
+                    if colour == 0 {
+                        TRANSPARENT
+                    } else {
+                        mmu.vram.load16(colour as u32 * 2) as u32 | prio
+                    }
+                }
+                RotScaleCtrl::Bitmap(_) => {
+                    mmu.vram.load16((iy * xsize + ix) * 2) as u32 | prio
+                }
+            }
+        } else {
+            TRANSPARENT
+        };
+
         line[x as usize] = colour;
 
         xval = xval.wrapping_add(params.a);
@@ -125,3 +153,11 @@ pub(super) fn render_rotscale_line(
     bgref.xref = bgref.xref.wrapping_add(params.b);
     bgref.yref = bgref.yref.wrapping_add(params.d);
 }
+
+/* For when we do text mode maps
+                    let map = if xsize == 256 || ysize == 256 {
+                        (ix >= 256) as u32 + (iy >= 256) as u32
+                    } else {
+                        (ix >= 256) as u32 + ((iy >= 256) as u32) * 2
+                    };
+                    */

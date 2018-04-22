@@ -13,7 +13,7 @@ use mmu::Mmu;
 
 use super::{Ppu, COLS, ROWS, PIX_BYTES};
 
-mod rotscale;
+mod background;
 mod object;
 mod mode3;
 
