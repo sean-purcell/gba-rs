@@ -98,10 +98,11 @@ pub(super) fn render_rotscale_line(
     bgref: &mut BgRef,
     params: RotScaleParams,
     ctrl: RotScaleCtrl,
+    bg: u8,
 ) {
     // upper 8 bits are priority
-    // set bit 27 so OBJ will have lower priority here
-    let prio = (ctrl.priority() << 28) | (1 << 27);
+    // add 1 so OBJ will have lower priority here
+    let prio = (ctrl.priority() << 28) | ((bg as u32 + 1) << 25);
 
     let base = ctrl.base_addr();
     let tile_base = ctrl.tile_base_addr();
@@ -152,6 +153,106 @@ pub(super) fn render_rotscale_line(
 
     bgref.xref = bgref.xref.wrapping_add(params.b);
     bgref.yref = bgref.yref.wrapping_add(params.d);
+}
+
+trait TextCtrl {
+    fn priority(self) -> u32;
+    fn tile_base_addr(self) -> u32;
+    fn is256c(self) -> bool;
+    fn base_addr(self) -> u32;
+    fn size(self) -> (u32, u32);
+}
+
+impl TextCtrl for u16 {
+    #[inline]
+    fn priority(self) -> u32 {
+        extract(self as u32, 0, 2)
+    }
+
+    #[inline]
+    fn tile_base_addr(self) -> u32 {
+        extract(self as u32, 2, 2) * 16 * 1024
+    }
+
+    #[inline]
+    fn is256c(self) -> bool {
+        bit(self as u32, 7) == 1
+    }
+
+    #[inline]
+    fn base_addr(self) -> u32 {
+        extract(self as u32, 8, 5) * 2 * 1024
+    }
+
+    #[inline]
+    fn size(self) -> (u32, u32) {
+        match extract(self as u32, 14, 2) {
+            0 => (256, 256),
+            1 => (512, 256),
+            2 => (256, 512),
+            3 => (512, 512),
+            _ => unreachable!(),
+        }
+    }
+}
+
+pub(super) fn render_textmode_line(
+    line: &mut LineBuf,
+    row: u32,
+    mmu: &GbaMmu,
+    bg: u8,
+) {
+    let ctrl = mmu.io.load16(8 + (bg as u32) * 2);
+    let prio = (ctrl.priority() << 28) | ((bg as u32 + 1) << 25);
+
+    let base = ctrl.base_addr();
+    let tile_base = ctrl.tile_base_addr();
+
+    let (xsize, ysize) = ctrl.size();
+
+    let xoff = mmu.io.load16(0x10 + (bg as u32) * 4) as u32;
+    let yoff = mmu.io.load16(0x12 + (bg as u32) * 4) as u32;
+
+    let c256 = ctrl.is256c();
+
+    let cmask = 511;
+    for x in 0..COLS {
+        let nx = (x + 512 - xoff) & cmask;
+        let ny = (row + 512 - yoff) & cmask;
+
+        let map = if xsize == 256 || ysize == 256 {
+            (nx >= 256) as u32 + (ny >= 256) as u32
+        } else {
+            (nx >= 256) as u32 + ((ny >= 256) as u32) * 2
+        };
+
+        let ix = nx % 256;
+        let iy = ny % 256;
+
+        let tile_idx = (ix / 8) + (iy / 8) * 32;
+        let addr = base + map * (2 * 1024) + tile_idx * 2;
+
+        let tile = mmu.vram.load16(addr) as u32;
+
+        let palette = if c256 { 0 } else { extract(tile, 12, 4) };
+        // FIXME: horizontal flip, vertical flip
+        let tile_num = extract(tile, 0, 10);
+
+        // * 1 if c16, * 2 otherwise
+        let px_idx = (ix % 8) + (iy % 8) * 8;
+
+        let px_addr = tile_num * 64 + px_idx;
+        let palette_colour = if c256 {
+            mmu.vram.load8(tile_base + px_addr)
+        } else {
+            (mmu.vram.load8(tile_base + px_addr / 2) >> ((px_addr & 1) * 4)) & 0xf
+        };
+        line[x as usize] = if palette_colour == 0 {
+            TRANSPARENT
+        } else {
+            mmu.pram.load16(palette * 32 + (palette_colour as u32) * 2) as u32 | prio
+        };
+    }
 }
 
 /* For when we do text mode maps

@@ -82,7 +82,8 @@ impl MemoryRange {
             0x7 => ObjectAttr,
             0x8 | 0x9 | 0xA | 0xB | 0xC | 0xD => GamePakRom,
             0xE => GamePakSram,
-            _ => MemoryRange::Unused,
+            0xF => MemoryRange::Unused,
+            _ => unreachable!(),
         }
     }
 }
@@ -97,7 +98,7 @@ pub struct Gba<'a> {
     pub rom: GameRom,
     pub gram: Ram,
 
-    io: Shared<IoReg<'a>>,
+    pub io: Shared<IoReg<'a>>,
 }
 
 impl<'a> Gba<'a> {

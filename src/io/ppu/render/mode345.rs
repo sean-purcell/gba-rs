@@ -5,7 +5,7 @@ use super::background::*;
 use super::object::*;
 
 impl<'a> Ppu<'a> {
-    pub(super) fn render_line_mode2(&mut self, row: u32, dspcnt: u16) {
+    pub(super) fn render_line_mode345(&mut self, row: u32, dspcnt: u16) {
         let win_enable = extract(dspcnt as u32, 13, 3) != 0;
         let in_win0 = bit(dspcnt as u32, 13) == 1 && in_win_vert(self.io.get_priv(0x44), row);
         let in_win1 = bit(dspcnt as u32, 14) == 1 && in_win_vert(self.io.get_priv(0x46), row);
@@ -28,33 +28,10 @@ impl<'a> Ppu<'a> {
                 &self.mmu,
                 &mut self.state.bg2ref,
                 rparams,
-                RotScaleCtrl::TileMap(self.io.get_priv(0xc)),
+                RotScaleCtrl::Bitmap(dspcnt),
                 2,
             );
         }
-
-        // FIXME: bg3ref won't get updated if this is skipped, not sure
-        // what the appropriate behaviour is
-        let bg3en = bit(dspcnt as u32, 11) == 1;
-        if bg3en {
-            let rparams = RotScaleParams::new(
-                self.io.get_priv(0x20),
-                self.io.get_priv(0x22),
-                self.io.get_priv(0x24),
-                self.io.get_priv(0x26),
-            );
-
-            render_rotscale_line(
-                &mut self.state.line3,
-                row,
-                &self.mmu,
-                &mut self.state.bg3ref,
-                rparams,
-                RotScaleCtrl::TileMap(self.io.get_priv(0xe)),
-                3,
-            );
-        }
-
         let objen = bit(dspcnt as u32, 12) == 1;
         if objen {
             render_obj_line(
@@ -97,10 +74,6 @@ impl<'a> Ppu<'a> {
 
             if bg2en && bit(en_mask, 2) == 1 {
                 colour = min(colour, self.state.line2[ux]);
-            }
-
-            if bg3en && bit(en_mask, 3) == 1 {
-                colour = min(colour, self.state.line3[ux]);
             }
 
             self.state.line[ux] = colour;

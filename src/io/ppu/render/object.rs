@@ -109,7 +109,7 @@ pub(super) fn render_obj_line(
             }
 
             let t = tbase + (tx / 8) * col_inc + (ty / 8) * row_inc;
-            let idx = ((tx % 8) + (ty % 8) * 8);
+            let idx = (tx % 8) + (ty % 8) * 8;
 
             let tile_addr = 0x10000 + t * 32;
             let palette_colour = if palette_mode == 0 {
