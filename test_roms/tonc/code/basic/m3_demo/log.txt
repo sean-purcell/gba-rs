@@ -1,0 +1,54 @@
+                                                                                                          │ 80003ca:       e00e            b.n     80003ea <bmp16_line+0xce>
+Thread 1 "gba-rs" hit Breakpoint 7, gba_rs::cpu::thumb::{{impl}}::execute_thumb<gba_rs::mmu::gba::Gba> (  │                        dst[ii*ystep]= clr;
+    self=0x7ffff104aff8) at src/cpu/thumb.rs:98                                                           │ 80003cc:       6afb            ldr     r3, [r7, #44]   ; 0x2c
+98              let pc = self.reg[reg::PC];                                                               │ 80003ce:       69fa            ldr     r2, [r7, #28]
+(gdb) c                                                                                                   │ 80003d0:       0019            movs    r1, r3
+Continuing.                                                                                               │ 80003d2:       4351            muls    r1, r2
+DEBUG 2018-04-23T17:10:14Z: gba_rs::cpu::thumb: THM: pc: 0x080003f4, inst: 0x6aba                         │ 80003d4:       000b            movs    r3, r1
+DEBUG 2018-04-23T17:10:14Z: gba_rs::cpu::thumb: Instruction: SingleXferI                                  │ 80003d6:       005b            lsls    r3, r3, #1
+                                                                                                          │ 80003d8:       697a            ldr     r2, [r7, #20]
+Thread 1 "gba-rs" hit Breakpoint 7, gba_rs::cpu::thumb::{{impl}}::execute_thumb<gba_rs::mmu::gba::Gba> (  │ 80003da:       18d3            adds    r3, r2, r3
+    self=0x7ffff104aff8) at src/cpu/thumb.rs:98                                                           │ 80003dc:       6bba            ldr     r2, [r7, #56]   ; 0x38
+98              let pc = self.reg[reg::PC];                                                               │ 80003de:       0412            lsls    r2, r2, #16
+(gdb) c                                                                                                   │ 80003e0:       0c12            lsrs    r2, r2, #16
+Continuing.                                                                                               │ 80003e2:       801a            strh    r2, [r3, #0]
+DEBUG 2018-04-23T17:10:39Z: gba_rs::cpu::thumb: THM: pc: 0x080003f6, inst: 0x6a7b                         │                for(ii=0; ii<=dy; ii++)
+DEBUG 2018-04-23T17:10:39Z: gba_rs::cpu::thumb: Instruction: SingleXferI                                  │ 80003e4:       6afb            ldr     r3, [r7, #44]   ; 0x2c
+                                                                                                          │ 80003e6:       3301            adds    r3, #1
+Thread 1 "gba-rs" hit Breakpoint 7, gba_rs::cpu::thumb::{{impl}}::execute_thumb<gba_rs::mmu::gba::Gba> (  │ 80003e8:       62fb            str     r3, [r7, #44]   ; 0x2c
+    self=0x7ffff104aff8) at src/cpu/thumb.rs:98                                                           │ 80003ea:       6afa            ldr     r2, [r7, #44]   ; 0x2c
+98              let pc = self.reg[reg::PC];                                                               │ 80003ec:       6a7b            ldr     r3, [r7, #36]   ; 0x24
+(gdb) p self.reg.reg[2]                                                                                   │ 80003ee:       429a            cmp     r2, r3
+$128 = 83                                                                                                 │ 80003f0:       ddec            ble.n   80003cc <bmp16_line+0xb0>
+(gdb) p self.reg.reg[3]                                                                                   │}
+$129 = 10                                                                                                 │ 80003f2:       e05a            b.n     80004aa <bmp16_line+0x18e>
+(gdb) c                                                                                                   │        else if(dx>=dy)         // Diagonal, slope <= 1
+Continuing.                                                                                               │ 80003f4:       6aba            ldr     r2, [r7, #40]   ; 0x28
+DEBUG 2018-04-23T17:10:50Z: gba_rs::cpu::thumb: THM: pc: 0x080003f8, inst: 0x429a                         │ 80003f6:       6a7b            ldr     r3, [r7, #36]   ; 0x24
+DEBUG 2018-04-23T17:10:50Z: gba_rs::cpu::thumb: Instruction: AluOp                                        │ 80003f8:       429a            cmp     r2, r3
+                                                                                                          │ 80003fa:       db2b            blt.n   8000454 <bmp16_line+0x138>
+Thread 1 "gba-rs" hit Breakpoint 7, gba_rs::cpu::thumb::{{impl}}::execute_thumb<gba_rs::mmu::gba::Gba> (  │                dd= 2*dy - dx;
+    self=0x7ffff104aff8) at src/cpu/thumb.rs:98                                                           │ 80003fc:       6a7b            ldr     r3, [r7, #36]   ; 0x24
+98              let pc = self.reg[reg::PC];                                                               │ 80003fe:       005a            lsls    r2, r3, #1
+(gdb) p/x self.reg.reg[16]                                                                                │ 8000400:       6abb            ldr     r3, [r7, #40]   ; 0x28
+$130 = 0x1000003f                                                                                         │ 8000402:       1ad3            subs    r3, r2, r3
+(gdb) p self.reg.reg[2]                                                                                   │ 8000404:       61bb            str     r3, [r7, #24]
+$131 = 83                                                                                                 │                for(ii=0; ii<=dx; ii++)
+(gdb) p self.reg.reg[3]                                                                                   │ 8000406:       2300            movs    r3, #0
+$132 = 10                                                                                                 │ 8000408:       62fb            str     r3, [r7, #44]   ; 0x2c
+(gdb) c                                                                                                   │ 800040a:       e01e            b.n     800044a <bmp16_line+0x12e>
+Continuing.                                                                                               │                        *dst= clr;
+DEBUG 2018-04-23T17:11:13Z: gba_rs::cpu::thumb: THM: pc: 0x080003fa, inst: 0xdb2b                         │ 800040c:       6bbb            ldr     r3, [r7, #56]   ; 0x38
+DEBUG 2018-04-23T17:11:13Z: gba_rs::cpu::thumb: Instruction: CondBranch                                   │ 800040e:       041b            lsls    r3, r3, #16
+                                                                                                          │ 8000410:       0c1a            lsrs    r2, r3, #16
+Thread 1 "gba-rs" hit Breakpoint 7, gba_rs::cpu::thumb::{{impl}}::execute_thumb<gba_rs::mmu::gba::Gba> (  │ 8000412:       697b            ldr     r3, [r7, #20]
+    self=0x7ffff104aff8) at src/cpu/thumb.rs:98                                                           │ 8000414:       801a            strh    r2, [r3, #0]
+98              let pc = self.reg[reg::PC];                                                               │                        if(dd >= 0)
+(gdb) p self.reg.reg[15]                                                                                  │ 8000416:       69bb            ldr     r3, [r7, #24]
+$133 = 134218836                                                                                          │ 8000418:       2b00            cmp     r3, #0
+(gdb) p/x self.reg.reg[15]                                                                                │ 800041a:       db09            blt.n   8000430 <bmp16_line+0x114>
+$134 = 0x8000454                                                                                          │                        {       dd -= 2*dx;     dst += ystep;   }
+(gdb) p self.reg.reg                                                                                      │ 800041c:       6abb            ldr     r3, [r7, #40]   ; 0x28
+$135 = {143, 9, 83, 10, 226, 19, 0, 50364040, 0, 0, 0, 0, 0, 50364040, 134218385, 134218836, 268435519,   │ 800041e:       005b            lsls    r3, r3, #1
+  0, 0, 0, 0, 0, 0, 0, 0, 50364320, 0 <repeats 11 times>}                                                 │ 8000420:       69ba            ldr     r2, [r7, #24]
+(gdb)                                                                                                     │:
