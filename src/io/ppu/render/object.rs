@@ -70,15 +70,21 @@ pub(super) fn render_obj_line(
         // FIXME: if y is large this should wrap
         let y0 = extract(a0, 0, 8);
 
-        if row < y0 || row >= y0 + ysize {
+        if !(y0 <= row && row < y0 + ysize) &&
+            !(y0 <= row + 256 && row + 256 < y0 + ysize) {
             continue
         }
 
-        let ty = row - y0;
+        let iy = (256 + row - y0) % 256;
+        let ty = if bit(a1, 13) == 1 {
+            ysize - 1 - iy
+        } else {
+            iy
+        };
 
         // if 2d layout mode is enabled, bottom bit of tile is ignored
         let (tbase, row_inc) = if dspcnt.layout2d() {
-            (extract(a2, 1, 9) << 1, 32)
+            (extract(a2, 0, 10), 32)
         } else {
             (extract(a2, 0, 10), xsize / 8)
         };
@@ -98,17 +104,25 @@ pub(super) fn render_obj_line(
         // FIXME: this should also wrap
         let x0 = extract(a1, 0, 9);
 
-        let xstart = min(x0, 240);
-        let xend = min(x0 + xsize, 240);
-        for x in xstart..xend {
-            let tx = x - xstart;
+        let xflip = bit(a1, 12) == 1;
+        for x in x0..x0+xsize {
+            let sx = x % 512;
+            if sx >= 240 {
+                continue
+            }
+            let ix = x - x0;
+            let tx = if xflip {
+                xsize - 1 - ix
+            } else {
+                ix
+            };
 
-            if line[x as usize] != TRANSPARENT {
+            if line[sx as usize] != TRANSPARENT {
                 // another tile already wrote here
                 continue
             }
 
-            let t = tbase + (tx / 8) * col_inc + (ty / 8) * row_inc;
+            let t = (tbase + (tx / 8) * col_inc + (ty / 8) * row_inc) & 1023;
             let idx = (tx % 8) + (ty % 8) * 8;
 
             let tile_addr = 0x10000 + t * 32;
@@ -125,11 +139,11 @@ pub(super) fn render_obj_line(
 
             // if in window mode
             if extract(a0, 10, 2) == 2 {
-                owin[x as usize] = 1;
+                owin[sx as usize] = 1;
             } else {
                 let colour = mmu.pram.load16(
                     0x200 + palette * 32 + (palette_colour as u32) * 2);
-                line[x as usize] = (colour as u32) | prio;
+                line[sx as usize] = (colour as u32) | prio;
             }
         }
     }
