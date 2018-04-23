@@ -13,7 +13,7 @@ trait Dspcnt {
 impl Dspcnt for u16 {
     #[inline]
     fn layout2d(self) -> bool {
-        bit(self as u32, 6) == 1
+        bit(self as u32, 6) == 0
     }
 
     #[inline]
@@ -128,7 +128,7 @@ pub(super) fn render_obj_line(
                 owin[x as usize] = 1;
             } else {
                 let colour = mmu.pram.load16(
-                    0x100 + palette * 32 + (palette_colour as u32) * 2);
+                    0x200 + palette * 32 + (palette_colour as u32) * 2);
                 line[x as usize] = (colour as u32) | prio;
             }
         }
