@@ -70,23 +70,25 @@ pub(super) fn render_obj_line(
         // FIXME: if y is large this should wrap
         let y0 = extract(a0, 0, 8);
 
-        if !(y0 <= row && row < y0 + ysize) &&
-            !(y0 <= row + 256 && row + 256 < y0 + ysize) {
+        let iy = (256 + row - y0) % 256;
+        if iy >= ysize {
             continue
         }
 
-        let iy = (256 + row - y0) % 256;
         let ty = if bit(a1, 13) == 1 {
             ysize - 1 - iy
         } else {
             iy
         };
 
+        let palette_mode = bit(a0, 13);
+
         // if 2d layout mode is enabled, bottom bit of tile is ignored
         let (tbase, row_inc) = if dspcnt.layout2d() {
             (extract(a2, 0, 10), 32)
         } else {
-            (extract(a2, 0, 10), xsize / 8)
+            // divide by 8 if 16/16, otherwise divide by 4
+            (extract(a2, 0, 10), xsize / (4 * (2 - palette_mode)))
         };
         if dspcnt.mode() > 2 && tbase < 512 {
             continue
@@ -96,7 +98,6 @@ pub(super) fn render_obj_line(
             1 << 16 /* semi-transparent */
         } else { 0 };
 
-        let palette_mode = bit(a0, 13);
         let palette = (1-palette_mode) * extract(a2, 12, 4);
         // 1 if 16/16, 2 if 256/1
         let col_inc = palette_mode + 1;

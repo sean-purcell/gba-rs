@@ -238,15 +238,14 @@ pub(super) fn render_textmode_line(
 
     let (xsize, ysize) = ctrl.size();
 
-    let xoff = mmu.io.load16(0x10 + (bg as u32) * 4) as u32;
-    let yoff = mmu.io.load16(0x12 + (bg as u32) * 4) as u32;
+    let xoff = extract(mmu.io.load16(0x10 + (bg as u32) * 4) as u32, 0, 9);
+    let yoff = extract(mmu.io.load16(0x12 + (bg as u32) * 4) as u32, 0, 9);
 
     let c256 = ctrl.is256c();
 
-    let cmask = 511;
     for x in 0..COLS {
-        let nx = (x + 512 - xoff) & cmask;
-        let ny = (row + 512 - yoff) & cmask;
+        let nx = (x + xoff) & (xsize-1);
+        let ny = (row + yoff) & (ysize-1);
 
         let map = if xsize == 256 || ysize == 256 {
             (nx >= 256) as u32 + (ny >= 256) as u32
@@ -267,7 +266,17 @@ pub(super) fn render_textmode_line(
         let tile_num = extract(tile, 0, 10);
 
         // * 1 if c16, * 2 otherwise
-        let px_idx = (ix % 8) + (iy % 8) * 8;
+        let tx = if bit(tile, 10) == 0 {
+            ix % 8
+        } else {
+            7 - (ix % 8)
+        };
+        let ty = if bit(tile, 11) == 0 {
+            iy % 8
+        } else {
+            7 - (iy % 8)
+        };
+        let px_idx = (tx % 8) + (ty % 8) * 8;
 
         let px_addr = tile_num * 64 + px_idx;
         let palette_colour = if c256 {
