@@ -65,6 +65,7 @@ impl MemoryRange {
             }
             ObjectAttr => addr & 0x3ff,
             GamePakRom => addr & 0x1ffffff,
+            GamePakSram => addr & 0xffff,
             _ => addr - self.bounds().0,
         }
     }
@@ -74,6 +75,7 @@ impl MemoryRange {
         use self::MemoryRange::*;
         match extract(addr, 24, 4) {
             0x0 => Bios,
+            0x1 => Unused,
             0x2 => BoardWram,
             0x3 => ChipWram,
             0x4 => IoRegister,
@@ -81,8 +83,7 @@ impl MemoryRange {
             0x6 => VideoRam,
             0x7 => ObjectAttr,
             0x8 | 0x9 | 0xA | 0xB | 0xC | 0xD => GamePakRom,
-            0xE => GamePakSram,
-            0xF => MemoryRange::Unused,
+            0xE | 0xF => GamePakSram,
             _ => unreachable!(),
         }
     }

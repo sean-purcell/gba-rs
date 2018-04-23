@@ -74,7 +74,7 @@ pub(super) fn render_obj_line(
             continue
         }
 
-        let ty = y0 - row;
+        let ty = row - y0;
 
         // if 2d layout mode is enabled, bottom bit of tile is ignored
         let (tbase, row_inc) = if dspcnt.layout2d() {
