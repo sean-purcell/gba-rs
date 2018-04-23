@@ -19,6 +19,7 @@ use Result;
 
 use cpu::Cpu;
 use io::IoReg;
+use io::key::KeyState;
 use io::ppu::{Ppu, ROWS, COLS};
 use mmu::gba::Gba as GbaMmu;
 use rom::GameRom;
@@ -131,6 +132,8 @@ impl<'a> Gba<'a> {
 
             event_pump.pump_events();
             let keys = event_pump.keyboard_state();
+            self.io.set_keyreg(&KeyState::new_from_keystate(&keys));
+
             if keys.is_scancode_pressed(sdl2::keyboard::Scancode::Escape) {
                 break;
             }

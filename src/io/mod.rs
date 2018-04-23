@@ -1,4 +1,5 @@
 pub mod ppu;
+pub mod key;
 
 use self::ppu::Ppu;
 
@@ -105,6 +106,7 @@ fn ro_mask(addr: u32) -> u16 {
     let all = u16::MAX;
 
     match addr {
+        0x130 => 0xffff,
         _ => 0,
     }
 }
