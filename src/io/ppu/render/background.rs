@@ -88,6 +88,21 @@ impl RotScaleCtrl {
             Bitmap(dspcnt) => false,
         }
     }
+
+    #[inline]
+    fn is_palette(&self) -> bool {
+        use self::RotScaleCtrl::*;
+        match *self {
+            TileMap(ctrl) => true,
+            Bitmap(dspcnt) => {
+                match extract(dspcnt as u32, 0, 3) {
+                    3 | 5 => false,
+                    4 => true,
+                    _ => unreachable!(),
+                }
+            }
+        }
+    }
 }
 
 // FIXME: mosaic
@@ -108,6 +123,8 @@ pub(super) fn render_rotscale_line(
     let tile_base = ctrl.tile_base_addr();
 
     let (xsize, ysize) = ctrl.size();
+
+    let is_palette = ctrl.is_palette();
 
     let mut xval = bgref.xref;
     let mut yval = bgref.yref;
@@ -138,7 +155,18 @@ pub(super) fn render_rotscale_line(
                     }
                 }
                 RotScaleCtrl::Bitmap(_) => {
-                    mmu.vram.load16((iy * xsize + ix) * 2) as u32 | prio
+                    // mode 3/5 are direct colours, 4 is palette
+                    let idx = iy * xsize + ix;
+                    if is_palette {
+                        let colour = mmu.vram.load8(base + idx);
+                        if colour == 0 {
+                            TRANSPARENT
+                        } else {
+                            mmu.pram.load16(colour as u32 * 2) as u32 | prio
+                        }
+                    } else {
+                        mmu.vram.load16(base + idx * 2) as u32 | prio
+                    }
                 }
             }
         } else {
@@ -254,11 +282,3 @@ pub(super) fn render_textmode_line(
         };
     }
 }
-
-/* For when we do text mode maps
-                    let map = if xsize == 256 || ysize == 256 {
-                        (ix >= 256) as u32 + (iy >= 256) as u32
-                    } else {
-                        (ix >= 256) as u32 + ((iy >= 256) as u32) * 2
-                    };
-                    */
