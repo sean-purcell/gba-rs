@@ -44,7 +44,7 @@ OBJCOPY	:= $(CROSS)objcopy
 ARCH	:= -mthumb-interwork -mthumb
 
 ASFLAGS	:= -mthumb-interwork
-CFLAGS	:= $(ARCH) -O0 -Wall -fno-strict-aliasing -g
+CFLAGS	:= $(ARCH) -O2 -Wall -fno-strict-aliasing
 LDFLAGS	:= $(ARCH) $(SPECS)
 
 .PHONY : build clean
