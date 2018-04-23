@@ -86,11 +86,12 @@ pub fn add_flags(lhs: u32, rhs: u32, carry: u32) -> (u32, u32, u32) {
 
     #[cfg_attr(rustfmt, rustfmt_skip)]
     (res,
+     ((is_neg(lhs) && is_neg(rhs) && is_pos(res)) ||
+      (is_pos(lhs) && is_pos(rhs) && is_neg(res))) as u32,
      ((is_neg(lhs) && is_neg(rhs)) ||
       (is_neg(lhs) && is_pos(res)) ||
       (is_neg(rhs) && is_pos(res))) as u32,
-     ((is_neg(lhs) && is_neg(rhs) && is_pos(res)) ||
-      (is_pos(lhs) && is_pos(rhs) && is_neg(res))) as u32)
+    )
 }
 
 /// Performs subtraction and returns overflow and carry bits
@@ -101,11 +102,12 @@ pub fn sub_flags(lhs: u32, rhs: u32, carry: u32) -> (u32, u32, u32) {
 
     #[cfg_attr(rustfmt, rustfmt_skip)]
     (res,
+     ((is_neg(lhs) && is_pos(rhs) && is_pos(res)) ||
+      (is_pos(lhs) && is_neg(rhs) && is_neg(res))) as u32,
      ((is_neg(lhs) && is_pos(rhs)) ||
       (is_neg(lhs) && is_pos(res)) ||
       (is_pos(rhs) && is_pos(res))) as u32,
-     ((is_neg(lhs) && is_pos(rhs) && is_pos(res)) ||
-      (is_pos(lhs) && is_neg(rhs) && is_neg(res))) as u32)
+    )
 }
 
 /// Combines two 32 bit words into a 64 bit word
