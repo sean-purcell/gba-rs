@@ -54,9 +54,9 @@ impl<'a> Ppu<'a> {
             } else if in_win1 && in_win_hori(win1h, x) {
                 winin >> 8
             } else if in_wino && self.state.line_objwindow[ux] != 0 {
-                winout & 0xff
-            } else if win_enable {
                 winout >> 8
+            } else if win_enable {
+                winout & 0xff
             } else {
                 0xff
             } as u32;

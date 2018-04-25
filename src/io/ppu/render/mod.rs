@@ -1,8 +1,8 @@
 // Unimplemented rendering features:
-// All modes
-// Sprites
 // Fast access mode
 // Mosaic
+// Colour mixing
+// Sprite affine transforms
 
 use std::ops::{Deref, DerefMut};
 
@@ -27,7 +27,7 @@ impl<'a> Ppu<'a> {
     pub(super) fn render_line(&mut self, row: u32) {
         let dspcnt = self.io.get_priv(0);
         let mode = extract(dspcnt as u32, 0, 3);
-        debug!("Rendering mode {} scanline: {:#6x}", mode, dspcnt);
+        debug!("Rendering mode {} scanline: {:#06x}", mode, dspcnt);
         match mode {
             0 => self.render_line_mode0(row, dspcnt),
             1 => self.render_line_mode1(row, dspcnt),

@@ -143,15 +143,15 @@ pub(super) fn render_rotscale_line(
                 RotScaleCtrl::TileMap(_) => {
                     let tile_idx = (ix / 8) + (iy / 8) * (xsize / 8);
                     let addr = base + tile_idx;
-                    let tile = mmu.vram.load8(addr);
+                    let tile = mmu.vram.load8(addr) as u32;
                     // 256 colours / 1 palette
                     // one tile is 64 bytes
                     let px_idx = (ix % 8) + (iy % 8) * 8;
-                    let colour = mmu.vram.load8(tile_base + px_idx);
+                    let colour = mmu.vram.load8(tile_base + tile * 64 + px_idx);
                     if colour == 0 {
                         TRANSPARENT
                     } else {
-                        mmu.vram.load16(colour as u32 * 2) as u32 | prio
+                        mmu.pram.load16(colour as u32 * 2) as u32 | prio
                     }
                 }
                 RotScaleCtrl::Bitmap(_) => {

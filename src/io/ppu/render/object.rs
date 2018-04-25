@@ -66,8 +66,6 @@ pub(super) fn render_obj_line(
             (_, _) => unreachable!(),
         };
 
-        // don't do scaling for now
-        // FIXME: if y is large this should wrap
         let y0 = extract(a0, 0, 8);
 
         let iy = (256 + row - y0) % 256;
@@ -101,7 +99,6 @@ pub(super) fn render_obj_line(
         // 1 if 16/16, 2 if 256/1
         let col_inc = palette_mode + 1;
 
-        // FIXME: this should also wrap
         let x0 = extract(a1, 0, 9);
 
         let xflip = bit(a1, 12) == 1;
