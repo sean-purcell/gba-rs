@@ -26,6 +26,7 @@ mod gba;
 
 fn main() {
     env_logger::init();
+    log::set_max_level(log::LevelFilter::Off);
 
     use GBAError::*;
     match run_emu() {

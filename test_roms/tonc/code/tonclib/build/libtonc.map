@@ -1,0 +1,537 @@
+
+tonc_bg_affine.o:
+         U sin_lut
+00000000 0000002c T bg_aff_rotate
+0000002c 00000040 T bg_aff_rotscale
+0000006c 00000082 T bg_aff_premul
+000000f0 00000082 T bg_aff_postmul
+00000174 00000050 T bg_aff_rotscale2
+000001c4 00000098 T bg_rotscale_ex
+
+tonc_color.o:
+         U __aeabi_idiv
+         U div_lut
+         U Mod
+00000000 000000a0 T clr_rotate
+000000a0 000000a4 T clr_blend
+00000144 00000094 T clr_fade
+000001d8 0000007e T clr_grayscale
+00000258 000000cc T clr_rgbscale
+00000324 000000f4 T pal_gradient
+00000418 00000018 T pal_gradient_ex
+00000430 00000062 T clr_adj_brightness
+00000494 00000098 T clr_adj_contrast
+0000052c 0000009e T clr_adj_intensity
+
+tonc_sbmp8.o:
+         U tonccpy
+         U __toncset
+00000000 00000028 R bmp8_tab
+00000000 00000014 D m4_surface
+00000000 0000000e T sbmp8_get_pixel
+00000010 0000003a T sbmp8_plot
+0000004c 00000068 T sbmp8_vline
+000000b4 00000036 T sbmp8_hline
+000000ec 0000013c T sbmp8_line
+00000228 00000068 T sbmp8_rect
+00000290 000000c2 T sbmp8_frame
+00000354 0000013e T sbmp8_blit
+00000494 00000112 T sbmp8_floodfill_internal
+000005a8 00000028 T sbmp8_floodfill
+
+tonc_schr4r.o:
+         U memset32
+00000000 00000056 T schr4r_prep_map
+00000058 00000024 T schr4r_get_ptr
+0000007c 0000002e T schr4r_get_pixel
+000000ac 00000038 T schr4r_plot
+000000e4 000000ae T schr4r_hline
+00000194 0000006c T schr4r_vline
+00000200 00000176 T schr4r_line
+00000378 000002bc T schr4r_rect
+00000634 00000090 T schr4r_frame
+
+tonc_bmp16.o:
+         U memset16
+00000000 00000012 T bmp16_plot
+00000014 0000002e T bmp16_hline
+00000044 0000003c T bmp16_vline
+00000080 000000c0 T bmp16_line
+00000140 0000005e T bmp16_rect
+000001a0 00000080 T bmp16_frame
+
+tonc_irq.o:
+         U isr_master
+         U memset32
+00000000 00000040 T irq_init
+00000000 00000038 r __irq_senders
+00000040 0000002c T irq_set_master
+0000006c 00000130 T irq_set
+00000078 00000078 C __isr_table
+0000019c 00000078 T irq_add
+00000214 000000b4 T irq_delete
+000002c8 00000048 T irq_enable
+00000310 00000044 T irq_disable
+
+tonc_bg.o:
+00000000 000000ac T se_window
+
+tonc_obj_affine.o:
+         U Div
+         U oam_sizes
+         U sin_lut
+00000000 00000030 T obj_aff_copy
+00000030 0000002c T obj_aff_rotate
+0000005c 00000040 T obj_aff_rotscale
+0000009c 00000082 T obj_aff_premul
+00000120 00000082 T obj_aff_postmul
+000001a4 00000050 T obj_aff_rotscale2
+000001f4 00000148 T obj_rotscale_ex
+
+tonc_core.o:
+00000000 00000004 D __qran_seed
+00000000 00000030 R __snd_rates
+00000000 000000ce T tonccpy
+00000004 00000004 D vid_page
+00000030 00000010 R bg_aff_default
+00000040 00000018 R oam_sizes
+000000d0 0000009a T __toncset
+0000016c 00000010 T sqran
+0000017c 00000020 T octant
+0000019c 00000052 T octant_rot
+
+tonc_schr4c.o:
+         U memcpy32
+         U memset32
+00000000 00000028 R chr4c_tab
+00000000 00000024 T schr4c_get_pixel
+00000024 0000002e T schr4c_plot
+00000054 000000d0 T schr4c_hline
+00000124 00000048 T schr4c_vline
+0000016c 00000186 T schr4c_line
+000002f4 00000090 T schr4c_frame
+00000384 00000144 T schr4c_rect
+000004c8 00000330 T schr4c_blit
+000007f8 00000054 T schr4c_prep_map
+0000084c 00000010 T schr4c_get_ptr
+0000085c 00000158 T schr4c_floodfill_internal
+000009b4 00000034 T schr4c_floodfill
+
+tonc_math.o:
+00000000 0000002c T pt_in_rect
+0000002c 0000005a T vec_cross
+00000088 0000001a T rc_normalize
+
+tonc_bmp8.o:
+         U memset16
+00000000 00000038 T bmp8_plot
+00000038 0000006c T bmp8_hline
+000000a4 0000006a T bmp8_vline
+00000110 00000138 T bmp8_line
+00000248 000000e4 T bmp8_rect
+0000032c 00000076 T bmp8_frame
+
+tonc_surface.o:
+         U memcpy16
+         U memset
+00000000 000000c8 T srf_init
+000000c8 00000026 T srf_pal_copy
+000000f0 0000007c T srf_get_ptr
+
+tonc_oam.o:
+         U memcpy32
+00000000 00000048 T oam_init
+00000048 0000001e T obj_copy
+00000068 00000028 T obj_hide_multi
+00000090 00000028 T obj_unhide_multi
+
+tonc_sbmp16.o:
+         U memcpy16
+         U memset16
+00000000 00000028 R bmp16_tab
+00000000 00000014 D m5_surface
+00000000 00000010 T sbmp16_get_pixel
+00000010 00000014 T sbmp16_plot
+00000024 00000038 T sbmp16_vline
+00000028 00000014 R m3_surface
+0000005c 000000c0 T sbmp16_line
+0000011c 0000002e T sbmp16_hline
+0000014c 00000074 T sbmp16_rect
+000001c0 00000094 T sbmp16_frame
+00000254 00000150 T sbmp16_blit
+000003a4 00000120 T sbmp16_floodfill_internal
+000004c4 0000002c T sbmp16_floodfill
+
+tonc_video.o:
+         U vid_page
+00000000 00000020 T vid_flip
+
+tonc_input.o:
+         U VBlankIntrWait
+00000000 00000002 B __key_curr
+00000000 00000054 T key_poll
+00000000 00000008 D __key_rpt
+00000002 00000002 B __key_prev
+00000054 00000024 T key_wait_till_hit
+00000078 0000000c T key_repeat
+00000084 00000010 T key_repeat_mask
+00000094 00000014 T key_repeat_limits
+
+tte_init_se.o:
+         U BitUnPack
+         U gp_tte_context
+         U se_drawg_s
+         U se_erase
+         U srf_init
+         U sys8Font
+         U tte_init_base
+00000000 00000160 T tte_init_se
+
+tte_init_chr4c.o:
+         U chr4c_drawg_b1cts
+         U gp_tte_context
+         U schr4c_prep_map
+         U schr4c_rect
+         U srf_init
+         U tte_init_base
+         U verdana9Font
+00000000 00000028 T chr4c_erase
+00000028 000000e0 T tte_init_chr4c
+
+obj_drawg.o:
+         U gp_tte_context
+00000000 00000038 T obj_erase
+00000038 00000058 T obj_drawg
+
+bmp16_drawg_b1cs.o:
+         U gp_tte_context
+00000000 000000b8 T bmp16_drawg_b1cts
+000000b8 000000c8 T bmp16_drawg_b1cos
+
+tte_main.o:
+         U __aeabi_idiv
+         U __locale_ctype_ptr
+         U memset
+         U strtol
+         U sys8Font
+         U VBlankIntrDelay
+00000000 00000002 T dummy_drawg
+00000000 00000004 D gp_tte_context
+00000004 00000002 T dummy_erase
+00000008 00000014 T tte_set_context
+0000001c 00000010 T tte_set_color_attr
+0000002c 0000001c T tte_set_color_attrs
+00000048 00000048 C __tte_main_context
+00000048 00000020 T tte_set_color
+00000068 0000003c T tte_set_colors
+000000a4 0000007c T tte_init_base
+00000120 000000b4 T utf8_decode_char
+000001d4 00000010 T tte_cmd_skip
+000001dc 00000014 r srf.8899
+000001e4 00000044 T tte_cmd_next
+00000228 00000050 T tte_putc
+00000278 0000001c T tte_erase_rect
+00000294 00000024 T tte_erase_screen
+000002b8 00000028 T tte_erase_line
+000002e0 00000474 T tte_cmd_default
+00000754 000000ec T tte_write
+00000840 00000030 T tte_write_ex
+00000870 000000d8 T tte_get_text_size
+00000948 00000018 T tte_set_margins
+
+chr4r_drawg_b1cts.o:
+         U gp_tte_context
+00000000 00000144 T chr4r_drawg_b1cts
+
+tte_init_obj.o:
+         U BitUnPack
+         U gp_tte_context
+         U obj_drawg
+         U obj_erase
+         U sys8Font
+         U tte_init_base
+00000000 000000f0 T tte_init_obj
+
+tte_init_ase.o:
+         U ase_drawg_s
+         U ase_erase
+         U BitUnPack
+         U gp_tte_context
+         U srf_init
+         U sys8Font
+         U tte_init_base
+00000000 00000130 T tte_init_ase
+
+bmp16_drawg.o:
+         U gp_tte_context
+00000000 00000080 T bmp16_drawg
+00000080 00000090 T bmp16_drawg_t
+
+chr4c_drawg_b1cts.o:
+         U gp_tte_context
+00000000 00000140 T chr4c_drawg_b1cts
+
+tte_init_chr4r.o:
+         U chr4r_drawg_b1cts
+         U gp_tte_context
+         U schr4r_prep_map
+         U schr4r_rect
+         U srf_init
+         U tte_init_base
+         U verdana9Font
+00000000 00000028 T chr4r_erase
+00000028 000000e8 T tte_init_chr4r
+
+bmp8_drawg.o:
+         U gp_tte_context
+         U sbmp8_plot
+00000000 0000009c T bmp8_drawg
+0000009c 000000a4 T bmp8_drawg_t
+
+chr4c_drawg_b4cts.o:
+         U gp_tte_context
+00000000 00000134 T chr4c_drawg_b4cts
+
+ase_drawg.o:
+         U gp_tte_context
+         U sbmp8_rect
+00000000 0000002c T ase_erase
+0000002c 00000064 T ase_drawg_w8h8
+00000090 000000a8 T ase_drawg_w8h16
+00000138 000000f0 T ase_drawg
+00000228 000000f8 T ase_drawg_s
+
+se_drawg.o:
+         U gp_tte_context
+         U sbmp16_rect
+00000000 0000002c T se_erase
+0000002c 00000030 T se_drawg_w8h8
+0000005c 00000040 T se_drawg_w8h16
+0000009c 0000006c T se_drawg
+00000108 0000006c T se_drawg_s
+
+tte_iohook.o:
+         U __aeabi_idiv
+         U devoptab_list
+         U __getreent
+         U gp_tte_context
+         U nocash_buffer
+         U nocash_message
+         U setvbuf
+         U siscanf
+         U strncpy
+         U tte_cmd_default
+         U tte_erase_line
+         U tte_erase_rect
+         U tte_erase_screen
+         U utf8_decode_char
+00000000 00000004 b sConInitialized
+00000000 00000074 T tte_con_nocash
+00000074 00000044 T tte_init_con
+000000b8 0000015c T tte_cmd_vt100
+000000d4 00000068 R tte_dotab_stdout
+0000013c 00000068 R tte_dotab_nocash
+00000214 00000144 T tte_con_write
+
+tte_init_bmp.o:
+         U bmp16_drawg_b1cts
+         U bmp8_drawg_b1cts
+         U gp_tte_context
+         U m3_surface
+         U m4_surface
+         U m5_surface
+         U sbmp16_rect
+         U sbmp8_rect
+         U tte_init_base
+         U verdana9Font
+00000000 00000028 T bmp8_erase
+00000028 00000028 T bmp16_erase
+00000050 000000e4 T tte_init_bmp
+
+bmp8_drawg_b1cs.o:
+         U gp_tte_context
+         U sbmp8_rect
+00000000 00000108 T bmp8_drawg_b1cts
+00000108 00000120 T bmp8_drawg_b1cos
+
+tonc_text_map.o:
+         U gptxt
+         U toncfontTiles
+         U txt_bup_1toX
+00000000 0000009c T txt_init_se
+0000009c 00000028 T se_putc
+000000c4 00000058 T se_puts
+0000011c 0000004c T se_clrs
+
+tonc_text.o:
+         U toncfontTiles
+00000000 00000004 D gptxt
+00000000 00000044 T txt_init_std
+00000020 00000020 C __txt_base
+00000044 0000008c T txt_bup_1toX
+00000100 00000100 C txt_lut
+
+tonc_text_bm.o:
+         U gptxt
+         U memset16
+         U vid_page
+00000000 00000040 t bm16_putc.part.0
+00000040 0000007c t bm8_putc.part.1
+000000bc 00000088 T bm_putc
+00000144 00000010 T bm16_putc
+00000154 00000010 T bm8_putc
+00000164 000000a0 T bm16_puts
+00000204 000000d0 T bm8_puts
+000002d4 0000007c T bm_puts
+00000350 000000ac T bm16_clrs
+000003fc 00000098 T bm_clrs
+
+tonc_text_oam.o:
+         U gptxt
+         U toncfontTiles
+         U txt_bup_1toX
+00000000 00000058 T txt_init_obj
+00000058 0000002c T obj_putc
+00000084 0000006c T obj_puts
+000000f0 0000003c T obj_clrs
+
+tonc_bitmap.o:
+         U memset16
+00000000 00000042 T bm8_hline
+00000044 00000046 T bm8_vline
+0000008c 000000c0 T bm8_rect
+0000014c 0000005e T bm8_frame
+000001ac 00000012 T bm16_hline
+000001c0 00000018 T bm16_vline
+000001d8 000000a0 T bm16_line
+00000278 0000004c T bm16_rect
+000002c4 0000006c T bm16_frame
+
+tonc_isr_nest.o:
+         U __isr_table
+00000000 000000c0 T isr_master_nest
+
+clr_blend_fast.o:
+00000000 0000006c T clr_blend_fast
+
+clr_fade_fast.o:
+00000000 T clr_fade_fast
+
+tonc_bios.o:
+00000000 00000004 T SoftReset
+00000004 00000004 T RegisterRamReset
+00000008 00000004 T Halt
+0000000c 00000004 T Stop
+00000010 00000004 T IntrWait
+00000014 00000004 T VBlankIntrWait
+00000018 00000004 T Div
+0000001c 00000004 T DivArm
+00000020 00000004 T Sqrt
+00000024 00000004 T ArcTan
+00000028 00000004 T ArcTan2
+0000002c 00000004 T CpuSet
+00000030 00000004 T CpuFastSet
+00000034 00000004 T BiosCheckSum
+00000038 00000004 T BgAffineSet
+0000003c 00000004 T ObjAffineSet
+00000040 00000004 T BitUnPack
+00000044 00000004 T LZ77UnCompWram
+00000048 00000004 T LZ77UnCompVram
+0000004c 00000004 T HuffUnComp
+00000050 00000004 T RLUnCompWram
+00000054 00000004 T RLUnCompVram
+00000058 00000004 T Diff8bitUnFilterWram
+0000005c 00000004 T Diff8bitUnFilterVram
+00000060 00000004 T Diff16bitUnFilter
+00000064 00000004 T SoundBias
+00000068 00000004 T SoundDriverInit
+0000006c 00000004 T SoundDriverMode
+00000070 00000004 T SoundDriverMain
+00000074 00000004 T SoundDriverVSync
+00000078 00000004 T SoundChannelClear
+0000007c 00000004 T MidiKey2Freq
+00000080 00000004 T MultiBoot
+00000084 00000004 T SoundDriverVSyncOff
+00000088 00000004 T SoundDriverVSyncOn
+
+tonc_memcpy.o:
+00000000 0000003e T memcpy16
+00000000 00000038 T memcpy32
+
+sin_lut.o:
+00000000 00000404 R sin_lut
+
+tonc_bios_ex.o:
+00000000 00000010 T VBlankIntrDelay
+00000010 00000012 T DivSafe
+00000024 00000006 T Mod
+0000002c 00000006 T DivAbs
+00000034 00000006 T DivArmMod
+0000003c 00000006 T DivArmAbs
+00000044 00000010 T CpuFastFill
+
+div_lut.o:
+00000000 00000404 R div_lut
+
+tonc_nocash.o:
+00000000 0000005c T nocash_message
+00000000 00000030 T nocash_puts
+00000008 T nocash_buffer
+
+tonc_isr_master.o:
+         U __isr_table
+00000000 000000a0 T isr_master
+
+tonc_memset.o:
+00000000 00000036 T memset16
+00000000 0000004c T memset32
+
+verdana9i.o:
+00000000 R verdana9iFont
+00000018 R verdana9iGlyphs
+00000e18 R verdana9iWidths
+
+verdana10.o:
+00000000 R verdana10Font
+00000018 R verdana10Glyphs
+00001c18 R verdana10Widths
+
+verdana9b.o:
+00000000 R verdana9bFont
+00000018 R verdana9bGlyphs
+00000e18 R verdana9bWidths
+
+verdana9.o:
+00000000 R verdana9Font
+00000018 R verdana9Glyphs
+00000e18 R verdana9Widths
+
+sys8.o:
+00000000 R sys8Font
+00000018 R sys8Glyphs
+
+verdana9_b4.o:
+00000000 R verdana9_b4Font
+00000018 R verdana9_b4Glyphs
+00003818 R verdana9_b4Widths
+
+chr4c_drawg_b4cts_fast.o:
+         U gp_tte_context
+00000000 000000f8 T chr4c_drawg_b4cts_fast
+
+tte_types.o:
+
+chr4r_drawg_b1cts_fast.o:
+         U gp_tte_context
+00000000 00000110 T chr4r_drawg_b1cts_fast
+
+bmp8_drawg_b1cts_fast.o:
+         U gp_tte_context
+00000000 000000d8 T bmp8_drawg_b1cts_fast
+
+chr4c_drawg_b1cts_fast.o:
+         U gp_tte_context
+00000000 000000fc T chr4c_drawg_b1cts_fast
+
+toncfont.o:
+00000000 R toncfontTiles

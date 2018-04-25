@@ -203,6 +203,11 @@ impl<'a> Mmu for Gba<'a> {
 
     #[inline]
     fn set32(&mut self, addr: u32, val: u32) {
+        if addr == 0x6010000 {
+            error!("hit!");
+            use log;
+            log::set_max_level(log::LevelFilter::Debug);
+        }
         match self.get_range_mut(addr) {
             Some((naddr, mmu)) => mmu.set32(naddr, val),
             None => warning(addr),
