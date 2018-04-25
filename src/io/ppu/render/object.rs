@@ -52,7 +52,7 @@ pub(super) fn render_obj_line(
         let a1 = mmu.oam.load16(o * 8 + 2) as u32;
         let a2 = mmu.oam.load16(o * 8 + 4) as u32;
 
-        let (xsize, ysize) = match (extract(a0, 14, 2), extract(a1, 14, 2)) {
+        let (xsize, ysize): (u32, u32) = match (extract(a0, 14, 2), extract(a1, 14, 2)) {
             (0, x) if x < 4 => (8 * (1 << x), 8 * (1 << x)),
             (1, 0) => (16, 8),
             (1, 1) => (32, 8),
@@ -68,12 +68,59 @@ pub(super) fn render_obj_line(
 
         let y0 = extract(a0, 0, 8);
 
+        let (xarea, yarea) = if extract(a0, 8, 2) == 3 {
+            (xsize * 2, ysize * 2)
+        } else {
+            (xsize, ysize)
+        };
+
+        // TODO: Implement objects rendering at the top and not the bottom if it would
+        // wrap around
         let iy = (256 + row - y0) % 256;
-        if iy >= ysize {
+        if iy >= yarea {
             continue;
         }
 
-        let ty = if bit(a1, 13) == 1 { ysize - 1 - iy } else { iy };
+        if iy == yarea / 2 {
+            debug!("hi");
+        }
+
+        let (mut xval, mut yval, dx, dy) = if bit(a0, 8) == 1 {
+            // instead of based around top-left, it is based around centre
+            // q: screen coords, p: texture coords
+            // p = Q * (q - q0) + p0
+            let param_idx = extract(a1, 9, 5);
+            let rparams = RotScaleParams::new(
+                mmu.oam.load16(0x06 + 0x20 * param_idx),
+                mmu.oam.load16(0x0E + 0x20 * param_idx),
+                mmu.oam.load16(0x16 + 0x20 * param_idx),
+                mmu.oam.load16(0x1E + 0x20 * param_idx),
+            );
+
+            // p0_z = (zsize << 8) / 2
+            let xval = (xsize << 7)
+                .wrapping_sub((xarea/2).wrapping_mul(rparams.a))
+                .wrapping_sub((yarea/2).wrapping_mul(rparams.b))
+                .wrapping_add(iy.wrapping_mul(rparams.b));
+            let yval = (ysize << 7)
+                .wrapping_sub((xarea/2).wrapping_mul(rparams.c))
+                .wrapping_sub((yarea/2).wrapping_mul(rparams.d))
+                .wrapping_add(iy.wrapping_mul(rparams.d));
+            (xval, yval, rparams.a, rparams.c)
+        } else {
+            // create relevant values for horizontal/vertical flip
+            let (xval, dx) = if bit(a1, 12) == 0 {
+                (0, 0x0100)
+            } else {
+                ((xsize - 1) << 8, 0xffffff00)
+            };
+            let yval = if bit(a1, 13) == 0 {
+                iy
+            } else {
+                ysize - 1 - iy
+            } << 8;
+            (xval, yval, dx, 0)
+        };
 
         let palette_mode = bit(a0, 13);
 
@@ -102,16 +149,17 @@ pub(super) fn render_obj_line(
         let x0 = extract(a1, 0, 9);
 
         let xflip = bit(a1, 12) == 1;
-        for x in x0..x0 + xsize {
+        for x in x0..x0 + xarea {
             let sx = x % 512;
-            if sx >= 240 {
+
+            let (tx, ty) = (xval >> 8, yval >> 8);
+            xval = xval.wrapping_add(dx);
+            yval = yval.wrapping_add(dy);
+
+            if sx >= 240 || line[sx as usize] != TRANSPARENT {
                 continue;
             }
-            let ix = x - x0;
-            let tx = if xflip { xsize - 1 - ix } else { ix };
-
-            if line[sx as usize] != TRANSPARENT {
-                // another tile already wrote here
+            if tx >= xsize || ty >= ysize {
                 continue;
             }
 

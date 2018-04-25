@@ -164,6 +164,25 @@ pub struct BgRef {
     yref: u32,
 }
 
+#[derive(Default, Copy, Clone, Debug)]
+struct RotScaleParams {
+    a: u32,
+    b: u32,
+    c: u32,
+    d: u32,
+}
+
+impl RotScaleParams {
+    pub fn new(a: u16, b: u16, c: u16, d: u16) -> Self {
+        Self {
+            a: a as i16 as u32,
+            b: b as i16 as u32,
+            c: c as i16 as u32,
+            d: d as i16 as u32,
+        }
+    }
+}
+
 impl BgRef {
     pub(super) fn new(xl: u16, xh: u16, yl: u16, yh: u16) -> Self {
         Self {
