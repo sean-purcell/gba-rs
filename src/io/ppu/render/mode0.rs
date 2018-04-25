@@ -13,39 +13,19 @@ impl<'a> Ppu<'a> {
 
         let bg0en = bit(dspcnt as u32, 8) == 1;
         if bg0en {
-            render_textmode_line(
-                &mut self.state.line0,
-                row,
-                &self.mmu,
-                0,
-            );
+            render_textmode_line(&mut self.state.line0, row, &self.mmu, 0);
         }
         let bg1en = bit(dspcnt as u32, 9) == 1;
         if bg1en {
-            render_textmode_line(
-                &mut self.state.line1,
-                row,
-                &self.mmu,
-                1,
-            );
+            render_textmode_line(&mut self.state.line1, row, &self.mmu, 1);
         }
         let bg2en = bit(dspcnt as u32, 10) == 1;
         if bg2en {
-            render_textmode_line(
-                &mut self.state.line2,
-                row,
-                &self.mmu,
-                2,
-            );
+            render_textmode_line(&mut self.state.line2, row, &self.mmu, 2);
         }
         let bg3en = bit(dspcnt as u32, 11) == 1;
         if bg3en {
-            render_textmode_line(
-                &mut self.state.line3,
-                row,
-                &self.mmu,
-                3,
-            );
+            render_textmode_line(&mut self.state.line3, row, &self.mmu, 3);
         }
 
         let objen = bit(dspcnt as u32, 12) == 1;

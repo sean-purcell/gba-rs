@@ -224,12 +224,7 @@ impl TextCtrl for u16 {
     }
 }
 
-pub(super) fn render_textmode_line(
-    line: &mut LineBuf,
-    row: u32,
-    mmu: &GbaMmu,
-    bg: u8,
-) {
+pub(super) fn render_textmode_line(line: &mut LineBuf, row: u32, mmu: &GbaMmu, bg: u8) {
     let ctrl = mmu.io.load16(8 + (bg as u32) * 2);
     let prio = (ctrl.priority() << 28) | ((bg as u32 + 1) << 25);
 
@@ -244,8 +239,8 @@ pub(super) fn render_textmode_line(
     let c256 = ctrl.is256c();
 
     for x in 0..COLS {
-        let nx = (x + xoff) & (xsize-1);
-        let ny = (row + yoff) & (ysize-1);
+        let nx = (x + xoff) & (xsize - 1);
+        let ny = (row + yoff) & (ysize - 1);
 
         let map = if xsize == 256 || ysize == 256 {
             (nx >= 256) as u32 + (ny >= 256) as u32

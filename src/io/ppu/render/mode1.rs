@@ -13,21 +13,11 @@ impl<'a> Ppu<'a> {
 
         let bg0en = bit(dspcnt as u32, 8) == 1;
         if bg0en {
-            render_textmode_line(
-                &mut self.state.line0,
-                row,
-                &self.mmu,
-                0,
-            );
+            render_textmode_line(&mut self.state.line0, row, &self.mmu, 0);
         }
         let bg1en = bit(dspcnt as u32, 9) == 1;
         if bg1en {
-            render_textmode_line(
-                &mut self.state.line1,
-                row,
-                &self.mmu,
-                1,
-            );
+            render_textmode_line(&mut self.state.line1, row, &self.mmu, 1);
         }
 
         // FIXME: bg2ref won't get updated if this is skipped, not sure

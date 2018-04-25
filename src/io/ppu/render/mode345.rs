@@ -39,7 +39,7 @@ impl<'a> Ppu<'a> {
                 &mut self.state.line_objwindow,
                 row,
                 &self.mmu,
-                dspcnt
+                dspcnt,
             );
         }
 

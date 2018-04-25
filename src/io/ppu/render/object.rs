@@ -46,7 +46,7 @@ pub(super) fn render_obj_line(
         let a0 = mmu.oam.load16(o * 8 + 0) as u32;
         if extract(a0, 8, 2) == 2 || extract(a0, 10, 2) == 3 {
             // disabled
-            continue
+            continue;
         }
 
         let a1 = mmu.oam.load16(o * 8 + 2) as u32;
@@ -72,14 +72,10 @@ pub(super) fn render_obj_line(
 
         let iy = (256 + row - y0) % 256;
         if iy >= ysize {
-            continue
+            continue;
         }
 
-        let ty = if bit(a1, 13) == 1 {
-            ysize - 1 - iy
-        } else {
-            iy
-        };
+        let ty = if bit(a1, 13) == 1 { ysize - 1 - iy } else { iy };
 
         let palette_mode = bit(a0, 13);
 
@@ -91,14 +87,17 @@ pub(super) fn render_obj_line(
             (extract(a2, 0, 10), xsize / (4 * (2 - palette_mode)))
         };
         if dspcnt.mode() > 2 && tbase < 512 {
-            continue
+            continue;
         };
 
-        let prio = extract(a2, 10, 2) << 28 | if extract(a0, 10, 2) == 1 {
-            1 << 16 /* semi-transparent */
-        } else { 0 };
+        let prio = extract(a2, 10, 2) << 28 |
+            if extract(a0, 10, 2) == 1 {
+                1 << 16 /* semi-transparent */
+            } else {
+                0
+            };
 
-        let palette = (1-palette_mode) * extract(a2, 12, 4);
+        let palette = (1 - palette_mode) * extract(a2, 12, 4);
         // 1 if 16/16, 2 if 256/1
         let col_inc = palette_mode + 1;
 
@@ -106,21 +105,17 @@ pub(super) fn render_obj_line(
         let x0 = extract(a1, 0, 9);
 
         let xflip = bit(a1, 12) == 1;
-        for x in x0..x0+xsize {
+        for x in x0..x0 + xsize {
             let sx = x % 512;
             if sx >= 240 {
-                continue
+                continue;
             }
             let ix = x - x0;
-            let tx = if xflip {
-                xsize - 1 - ix
-            } else {
-                ix
-            };
+            let tx = if xflip { xsize - 1 - ix } else { ix };
 
             if line[sx as usize] != TRANSPARENT {
                 // another tile already wrote here
-                continue
+                continue;
             }
 
             let t = (tbase + (tx / 8) * col_inc + (ty / 8) * row_inc) & 1023;
@@ -129,13 +124,13 @@ pub(super) fn render_obj_line(
             let tile_addr = 0x10000 + t * 32;
             let palette_colour = if palette_mode == 0 {
                 let v = mmu.vram.load8(tile_addr + idx / 2);
-                (v >> ((idx&1) * 4)) & 0xf
+                (v >> ((idx & 1) * 4)) & 0xf
             } else {
                 mmu.vram.load8(tile_addr + idx)
             };
 
             if palette_colour == 0 {
-                continue
+                continue;
             }
 
             // if in window mode
@@ -143,7 +138,8 @@ pub(super) fn render_obj_line(
                 owin[sx as usize] = 1;
             } else {
                 let colour = mmu.pram.load16(
-                    0x200 + palette * 32 + (palette_colour as u32) * 2);
+                    0x200 + palette * 32 + (palette_colour as u32) * 2,
+                );
                 line[sx as usize] = (colour as u32) | prio;
             }
         }
