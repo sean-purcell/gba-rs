@@ -27,14 +27,18 @@ use rom::GameRom;
 const CYCLES_PER_SEC: u64 = 16 * 1024 * 1024;
 const CYCLES_PER_FRAME: u64 = 280896;
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Clone, Debug)]
 pub struct Options {
     pub fps_limit: bool,
+    pub breaks: Vec<u32>,
 }
 
 impl Default for Options {
     fn default() -> Self {
-        Options { fps_limit: true }
+        Options {
+            fps_limit: true,
+            breaks: Default::default(),
+        }
     }
 }
 
@@ -95,6 +99,8 @@ impl<'a> Gba<'a> {
                     &[(reg::PC, 0x08000000), (reg::SP, 0x03007F00)],
                 ),
             );
+            let opts = Shared::new(&mut gba.opts);
+            gba.cpu.set_breaks(opts.breaks.iter());
 
             ptr::write(
                 &mut gba.ppu,

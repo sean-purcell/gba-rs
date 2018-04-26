@@ -9,6 +9,7 @@ extern crate sdl2;
 extern crate flame;
 
 use std::default::Default;
+use std::error::Error;
 use std::fs::File;
 use std::path::Path;
 
@@ -72,6 +73,21 @@ fn run_emu() -> Result<()> {
                 .possible_values(&["true", "false"])
                 .default_value("true"),
         )
+        .arg(
+            Arg::with_name("breakpoints")
+                .short("b")
+                .long("breaks")
+                .required(false)
+                .takes_value(true)
+                .multiple(true)
+                .use_delimiter(true)
+                .validator(|s| {
+                    match u32::from_str_radix(s.as_str(), 16) {
+                        Ok(_) => Ok(()),
+                        Err(err) => Err(err.description().to_string()),
+                    }
+                })
+            )
         .get_matches();
 
     let res = run_gba(&app_m);
@@ -92,8 +108,14 @@ fn run_gba(app_m: &ArgMatches) -> Result<()> {
 
     let rom = rom::GameRom::new(&path)?;
 
+    let breaks: Vec<u32> = match app_m.values_of("breakpoints") {
+        Some(v) => v.map(|s| u32::from_str_radix(s, 16).unwrap()).collect(),
+        None => vec!(),
+    };
+
     let opts = gba::Options {
         fps_limit: app_m.value_of("fps-limit").unwrap() == "true",
+        breaks: breaks,
         ..Default::default()
     };
 

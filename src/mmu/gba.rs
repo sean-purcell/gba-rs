@@ -154,17 +154,20 @@ impl<'a> Gba<'a> {
 impl<'a> Mmu for Gba<'a> {
     #[inline]
     fn load8(&self, addr: u32) -> u8 {
-        match self.get_range(addr) {
+        let val = match self.get_range(addr) {
             Some((naddr, mmu)) => mmu.load8(naddr),
             None => {
                 warning(addr);
                 0
             }
-        }
+        };
+        debug!("load08\t@ {:#010x}: {:#04x}", addr, val);
+        val
     }
 
     #[inline]
     fn set8(&mut self, addr: u32, val: u8) {
+        debug!("set08\t@ {:#010x}: {:#04x}", addr, val);
         match self.get_range_mut(addr) {
             Some((naddr, mmu)) => mmu.set8(naddr, val),
             None => warning(addr),
@@ -173,17 +176,20 @@ impl<'a> Mmu for Gba<'a> {
 
     #[inline]
     fn load16(&self, addr: u32) -> u16 {
-        match self.get_range(addr) {
+        let val = match self.get_range(addr) {
             Some((naddr, mmu)) => mmu.load16(naddr),
             None => {
                 warning(addr);
                 0
             }
-        }
+        };
+        debug!("load16\t@ {:#010x}: {:#06x}", addr, val);
+        val
     }
 
     #[inline]
     fn set16(&mut self, addr: u32, val: u16) {
+        debug!("set16\t@ {:#010x}: {:#06x}", addr, val);
         match self.get_range_mut(addr) {
             Some((naddr, mmu)) => mmu.set16(naddr, val),
             None => warning(addr),
@@ -192,17 +198,20 @@ impl<'a> Mmu for Gba<'a> {
 
     #[inline]
     fn load32(&self, addr: u32) -> u32 {
-        match self.get_range(addr) {
+        let val = match self.get_range(addr) {
             Some((naddr, mmu)) => mmu.load32(naddr),
             None => {
                 warning(addr);
                 0
             }
-        }
+        };
+        debug!("load32\t@ {:#010x}: {:#010x}", addr, val);
+        val
     }
 
     #[inline]
     fn set32(&mut self, addr: u32, val: u32) {
+        debug!("set32\t@ {:#010x}: {:#010x}", addr, val);
         match self.get_range_mut(addr) {
             Some((naddr, mmu)) => mmu.set32(naddr, val),
             None => warning(addr),
