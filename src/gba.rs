@@ -102,7 +102,7 @@ impl<'a> Gba<'a> {
                     Shared::new(&mut gba.mmu),
                     &[
                         (Mode::User.reg_bank(), reg::PC, 0x08000000),
-                        (Mode::User.reg_bank(), reg::CPSR, 0x0000001F0),
+                        (Mode::User.reg_bank(), reg::CPSR, 0x0000001F),
                         (Mode::User.reg_bank(), reg::SP, 0x03007F00),
                         (Mode::Supervisor.reg_bank(), reg::SP, 0x03007FE0),
                         (Mode::Irq.reg_bank(), reg::SP, 0x03007FA0),
