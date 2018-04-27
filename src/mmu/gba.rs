@@ -91,6 +91,7 @@ impl MemoryRange {
 
 /// Implements the memory mapping for a GBA system
 pub struct Gba<'a> {
+    pub bios: GameRom,
     pub bram: Ram,
     pub cram: Ram,
     pub pram: Ram,
@@ -103,8 +104,9 @@ pub struct Gba<'a> {
 }
 
 impl<'a> Gba<'a> {
-    pub fn new(rom: GameRom, io: Shared<IoReg<'a>>) -> Gba {
+    pub fn new(rom: GameRom, bios: GameRom, io: Shared<IoReg<'a>>) -> Gba {
         Gba {
+            bios: bios,
             bram: Ram::new(256 * 1024),
             cram: Ram::new(32 * 1024),
             pram: Ram::new(1024),
@@ -121,6 +123,7 @@ impl<'a> Gba<'a> {
         let range = MemoryRange::match_addr(addr);
         let naddr = range.convert_addr(addr);
         match range {
+            Bios => Some((naddr, &self.bios)),
             BoardWram => Some((naddr, &self.bram)),
             ChipWram => Some((naddr, &self.cram)),
             IoRegister => Some((naddr, &*self.io)),
@@ -138,6 +141,7 @@ impl<'a> Gba<'a> {
         let range = MemoryRange::match_addr(addr);
         let naddr = range.convert_addr(addr);
         match range {
+            Bios => Some((naddr, &mut self.bios)),
             BoardWram => Some((naddr, &mut self.bram)),
             ChipWram => Some((naddr, &mut self.cram)),
             IoRegister => Some((naddr, &mut *self.io)),

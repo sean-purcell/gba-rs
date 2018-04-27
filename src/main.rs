@@ -51,6 +51,9 @@ fn run_emu() -> Result<()> {
         .version("0.1")
         .about("Bad GBA Emulator")
         .author("Sean Purcell")
+        .arg(Arg::with_name("bios").required(true).help(
+            "GBA bios rom to use"
+        ))
         .arg(Arg::with_name("rom").required(true).help(
             "ROM file to emulate",
         ))
@@ -104,9 +107,11 @@ fn run_emu() -> Result<()> {
 }
 
 fn run_gba(app_m: &ArgMatches) -> Result<()> {
-    let path = Path::new(app_m.value_of_os("rom").unwrap());
+    let bios_path = Path::new(app_m.value_of_os("bios").unwrap());
+    let game_path = Path::new(app_m.value_of_os("rom").unwrap());
 
-    let rom = rom::GameRom::new(&path)?;
+    let bios = rom::GameRom::new(&bios_path)?;
+    let rom = rom::GameRom::new(&game_path)?;
 
     let breaks: Vec<u32> = match app_m.values_of("breakpoints") {
         Some(v) => v.map(|s| u32::from_str_radix(s, 16).unwrap()).collect(),
@@ -119,7 +124,7 @@ fn run_gba(app_m: &ArgMatches) -> Result<()> {
         ..Default::default()
     };
 
-    let mut gba = gba::Gba::new(rom, opts);
+    let mut gba = gba::Gba::new(rom, bios, opts);
 
     /*
     gba.run();

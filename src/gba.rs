@@ -18,6 +18,7 @@ use shared::Shared;
 use Result;
 
 use cpu::Cpu;
+use cpu::mode::Mode;
 use io::IoReg;
 use io::key::KeyState;
 use io::ppu::{Ppu, ROWS, COLS};
@@ -59,7 +60,7 @@ pub struct Gba<'a> {
 }
 
 impl<'a> Gba<'a> {
-    pub fn new(rom: GameRom, options: Options) -> Box<Self> {
+    pub fn new(rom: GameRom, bios: GameRom, options: Options) -> Box<Self> {
         unsafe {
             let mut gba: Box<Gba> = Box::new(mem::uninitialized());
             ptr::write(&mut gba.opts, options);
@@ -89,14 +90,18 @@ impl<'a> Gba<'a> {
             );
 
             ptr::write(&mut gba.io, IoReg::new());
-            ptr::write(&mut gba.mmu, GbaMmu::new(rom, Shared::new(&mut gba.io)));
+            ptr::write(&mut gba.mmu, GbaMmu::new(rom, bios, Shared::new(&mut gba.io)));
 
             use cpu::reg;
             ptr::write(
                 &mut gba.cpu,
                 Cpu::new(
                     Shared::new(&mut gba.mmu),
-                    &[(reg::PC, 0x08000000), (reg::SP, 0x03007F00)],
+                    &[(Mode::User.reg_bank(), reg::PC, 0x08000000),
+                      (Mode::User.reg_bank(), reg::CPSR, 0x0000001F0),
+                      (Mode::User.reg_bank(), reg::SP, 0x03007F00),
+                      (Mode::Supervisor.reg_bank(), reg::SP, 0x03007FE0),
+                      (Mode::Irq.reg_bank(), reg::SP, 0x03007FA0)],
                 ),
             );
             let opts = Shared::new(&mut gba.opts);
