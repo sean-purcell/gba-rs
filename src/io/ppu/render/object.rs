@@ -99,12 +99,12 @@ pub(super) fn render_obj_line(
 
             // p0_z = (zsize << 8) / 2
             let xval = (xsize << 7)
-                .wrapping_sub((xarea/2).wrapping_mul(rparams.a))
-                .wrapping_sub((yarea/2).wrapping_mul(rparams.b))
+                .wrapping_sub((xarea / 2).wrapping_mul(rparams.a))
+                .wrapping_sub((yarea / 2).wrapping_mul(rparams.b))
                 .wrapping_add(iy.wrapping_mul(rparams.b));
             let yval = (ysize << 7)
-                .wrapping_sub((xarea/2).wrapping_mul(rparams.c))
-                .wrapping_sub((yarea/2).wrapping_mul(rparams.d))
+                .wrapping_sub((xarea / 2).wrapping_mul(rparams.c))
+                .wrapping_sub((yarea / 2).wrapping_mul(rparams.d))
                 .wrapping_add(iy.wrapping_mul(rparams.d));
             (xval, yval, rparams.a, rparams.c)
         } else {
@@ -114,11 +114,7 @@ pub(super) fn render_obj_line(
             } else {
                 ((xsize - 1) << 8, 0xffffff00)
             };
-            let yval = if bit(a1, 13) == 0 {
-                iy
-            } else {
-                ysize - 1 - iy
-            } << 8;
+            let yval = if bit(a1, 13) == 0 { iy } else { ysize - 1 - iy } << 8;
             (xval, yval, dx, 0)
         };
 

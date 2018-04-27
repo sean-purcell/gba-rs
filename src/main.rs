@@ -52,7 +52,7 @@ fn run_emu() -> Result<()> {
         .about("Bad GBA Emulator")
         .author("Sean Purcell")
         .arg(Arg::with_name("bios").required(true).help(
-            "GBA bios rom to use"
+            "GBA bios rom to use",
         ))
         .arg(Arg::with_name("rom").required(true).help(
             "ROM file to emulate",
@@ -84,13 +84,11 @@ fn run_emu() -> Result<()> {
                 .takes_value(true)
                 .multiple(true)
                 .use_delimiter(true)
-                .validator(|s| {
-                    match u32::from_str_radix(s.as_str(), 16) {
-                        Ok(_) => Ok(()),
-                        Err(err) => Err(err.description().to_string()),
-                    }
-                })
-            )
+                .validator(|s| match u32::from_str_radix(s.as_str(), 16) {
+                    Ok(_) => Ok(()),
+                    Err(err) => Err(err.description().to_string()),
+                }),
+        )
         .get_matches();
 
     let res = run_gba(&app_m);
@@ -115,7 +113,7 @@ fn run_gba(app_m: &ArgMatches) -> Result<()> {
 
     let breaks: Vec<u32> = match app_m.values_of("breakpoints") {
         Some(v) => v.map(|s| u32::from_str_radix(s, 16).unwrap()).collect(),
-        None => vec!(),
+        None => vec![],
     };
 
     let opts = gba::Options {
