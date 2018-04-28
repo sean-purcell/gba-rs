@@ -89,11 +89,7 @@ fn run_emu() -> Result<()> {
                     Err(err) => Err(err.description().to_string()),
                 }),
         )
-        .arg(
-            Arg::with_name("quiet")
-                .short("q")
-                .long("quiet")
-        )
+        .arg(Arg::with_name("quiet").short("q").long("quiet"))
         .get_matches();
 
     if app_m.is_present("quiet") {

@@ -62,6 +62,7 @@ impl<'a> IoReg<'a> {
         }
     }
 
+    #[inline]
     fn raise_interrupt(&mut self, itr: u8) {
         let pif = self.get_priv(IF);
         self.set_priv(IF, pif | (1 << (itr as u16)));

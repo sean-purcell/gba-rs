@@ -98,6 +98,9 @@ impl<'a> Ppu<'a> {
             if ds & 0x20 != 0 {
                 self.io.raise_interrupt(2);
             }
+        } else {
+            // unset vcounter flag
+            ds &= !4;
         }
         ds &= !2; // unset hblank flag
         self.io.set_priv(DISPSTAT, ds);
