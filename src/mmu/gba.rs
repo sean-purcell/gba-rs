@@ -1,3 +1,5 @@
+// FIXME: implement open bus
+// FIXME: move unaligned access logic here from CPU
 use shared::Shared;
 
 use rom::GameRom;

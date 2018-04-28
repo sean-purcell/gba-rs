@@ -120,8 +120,10 @@ impl<'a> Gba<'a> {
                     Shared::new(&mut gba.mmu),
                 ),
             );
+
+            let cpu = Shared::new(&mut gba.cpu);
             let ppu = Shared::new(&mut gba.ppu);
-            gba.io.init(ppu);
+            gba.io.init(cpu, ppu);
 
 
             gba
@@ -178,5 +180,6 @@ impl<'a> Gba<'a> {
     fn cycle(&mut self) {
         self.cpu.cycle();
         self.ppu.cycle();
+        self.io.cycle();
     }
 }

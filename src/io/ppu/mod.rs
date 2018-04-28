@@ -6,7 +6,7 @@ use mmu::Mmu;
 use mmu::gba::Gba as GbaMmu;
 use shared::Shared;
 
-use super::IoReg;
+use super::*;
 
 mod render;
 
@@ -56,24 +56,75 @@ impl<'a> Ppu<'a> {
             return;
         }
 
-        if self.col == 0 && self.row < 160 {
-            // The borrow checker is really strict... self.row.clone() didn't work
-            let row = self.row;
-            self.render_line(row);
+        self.delay = 3;
+
+        if self.col == 0 {
+            if self.row == 0 {
+                self.frame_start();
+            }
+            self.line_start();
         }
 
-        self.delay = 3;
         self.col += 1;
-        if self.col == 308 {
+        if self.col == 240 {
+            self.hblank();
+        } else if self.col == 308 {
             self.col = 0;
             self.row += 1;
-            self.hblank_end();
 
-            if self.row == 228 {
+            if self.row == 160 {
+                self.vblank();
+            } else if self.row == 228 {
                 self.row = 0;
                 self.vblank_end();
             }
         }
+    }
+
+    fn frame_start(&mut self) {
+        self.update_bg2ref();
+        self.update_bg3ref();
+
+        let mut ds = self.io.get_priv(DISPSTAT);
+        ds &= !1; // unset vblank flag
+        self.io.set_priv(DISPSTAT, ds);
+    }
+
+    fn line_start(&mut self) {
+        self.io.set_priv(VCOUNT, self.row as u16);
+        let mut ds = self.io.get_priv(DISPSTAT);
+        if (ds >> 8) == self.row as u16 {
+            ds |= 4; // vcounter
+            if ds & 0x20 != 0 {
+                self.io.raise_interrupt(2);
+            }
+        }
+        ds &= !2; // unset hblank flag
+        self.io.set_priv(DISPSTAT, ds);
+
+        if self.row < 160 {
+            // The borrow checker is really strict... self.row.clone() didn't work
+            let row = self.row;
+            self.render_line(row);
+        }
+    }
+
+    fn hblank(&mut self) {
+        let mut ds = self.io.get_priv(DISPSTAT);
+        ds |= 2;
+        if ds & 0x10 != 0 {
+            self.io.raise_interrupt(1);
+        }
+        self.io.set_priv(DISPSTAT, ds);
+    }
+
+    fn vblank(&mut self) {
+        let mut ds = self.io.get_priv(DISPSTAT);
+        ds |= 1;
+        if ds & 0x8 != 0 {
+            self.io.raise_interrupt(0);
+        }
+        self.io.set_priv(DISPSTAT, ds);
     }
 
     fn vblank_end(&mut self) {
@@ -89,14 +140,6 @@ impl<'a> Ppu<'a> {
                 );
             })
             .unwrap();
-
-        // TODO: this is one cycle off from when it should actually happen probably
-        self.update_bg2ref();
-        self.update_bg3ref();
-    }
-
-    fn hblank_end(&mut self) {
-        self.io.set_priv(0x6, self.row as u16);
     }
 
     pub fn update_bg2ref(&mut self) {
