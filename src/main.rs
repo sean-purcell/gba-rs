@@ -89,7 +89,17 @@ fn run_emu() -> Result<()> {
                     Err(err) => Err(err.description().to_string()),
                 }),
         )
+        .arg(
+            Arg::with_name("quiet")
+                .short("q")
+                .long("quiet")
+        )
         .get_matches();
+
+    if app_m.is_present("quiet") {
+        info!("Disabling logging");
+        log::set_max_level(log::LevelFilter::Off);
+    }
 
     let res = run_gba(&app_m);
 
