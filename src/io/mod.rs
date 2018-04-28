@@ -1,7 +1,9 @@
 pub mod ppu;
 pub mod key;
+mod timer;
 
 use self::ppu::Ppu;
+use self::timer::Timers;
 
 use cpu::{Cpu, reg, exception};
 use mmu::Mmu;
@@ -23,6 +25,8 @@ pub struct IoReg<'a> {
 
     cpu: Shared<Cpu<GbaMmu<'a>>>,
     ppu: Shared<Ppu<'a>>,
+
+    timers: Timers<'a>,
 }
 
 impl<'a> IoReg<'a> {
@@ -31,6 +35,7 @@ impl<'a> IoReg<'a> {
             reg: Ram::new(IO_REG_SIZE),
             cpu: Shared::empty(),
             ppu: Shared::empty(),
+            timers: Default::default(),
         };
         io.set_initial();
         io
@@ -46,9 +51,13 @@ impl<'a> IoReg<'a> {
     pub fn init(&mut self, cpu: Shared<Cpu<GbaMmu<'a>>>, ppu: Shared<Ppu<'a>>) {
         self.cpu = cpu;
         self.ppu = ppu;
+
+        let io = Shared::new(self);
+        self.timers.init(io);
     }
 
     pub fn cycle(&mut self) {
+        self.timers.cycle();
         self.check_interrupt();
     }
 
@@ -83,6 +92,7 @@ impl<'a> IoReg<'a> {
     #[inline]
     fn get(&self, addr: u32) -> u16 {
         match addr {
+            0x100 | 0x104 | 0x108 | 0x10c => self.timers.get((addr - 0x100) / 4),
             _ => self.reg.load16(addr),
         }
     }
@@ -90,19 +100,20 @@ impl<'a> IoReg<'a> {
     #[inline]
     fn set(&mut self, addr: u32, val: u16) {
         let ro = ro_mask(addr);
-        let old = if ro != 0 { self.get_priv(addr) } else { 0 };
+        let old = self.get_priv(addr);
         let nval = (ro & old) | (!ro & val);
         self.reg.set16(addr, nval);
 
         // Potential callback
-        self.updated(addr, nval);
+        self.updated(addr, old, nval);
     }
 
-    fn updated(&mut self, addr: u32, val: u16) {
+    fn updated(&mut self, addr: u32, old: u16, new: u16) {
         match addr {
             0x28 | 0x2a | 0x2c | 0x2e => self.ppu.update_bg2ref(),
             0x38 | 0x3a | 0x3c | 0x3e => self.ppu.update_bg3ref(),
-            0x202 => self.disable_intrreq(val),
+            0x202 => self.disable_intrreq(new),
+            0x102 | 0x106 | 0x10a | 0x10e => self.timers.updated((addr - 0x102) / 4, old, new),
             _ => (),
         }
     }
@@ -161,7 +172,7 @@ fn ro_mask(addr: u32) -> u16 {
     let all = u16::MAX;
 
     match addr {
-        0x130 => all,
+        0x130 |
         0x202 => all,
         _ => 0,
     }

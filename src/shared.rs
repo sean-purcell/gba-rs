@@ -4,9 +4,19 @@ use std::ptr;
 
 /// Class to help with the weak references between singletons in the GBA
 /// structure.  Totally throwing safety out the window here.
-#[derive(Clone)]
 pub struct Shared<T> {
     t: *mut T,
+}
+
+impl<T> Copy for Shared<T> {}
+impl<T> Clone for Shared<T> {
+    fn clone(&self) -> Self { *self }
+}
+
+impl<T> Default for Shared<T> {
+    fn default() -> Self {
+        Self::empty()
+    }
 }
 
 impl<T> Shared<T> {
