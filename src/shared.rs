@@ -10,7 +10,9 @@ pub struct Shared<T> {
 
 impl<T> Copy for Shared<T> {}
 impl<T> Clone for Shared<T> {
-    fn clone(&self) -> Self { *self }
+    fn clone(&self) -> Self {
+        *self
+    }
 }
 
 impl<T> Default for Shared<T> {

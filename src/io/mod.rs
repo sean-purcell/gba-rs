@@ -182,8 +182,7 @@ fn ro_mask(addr: u32) -> u16 {
     let all = u16::MAX;
 
     match addr {
-        0x130 |
-        0x202 => all,
+        0x130 | 0x202 => all,
         _ => 0,
     }
 }
