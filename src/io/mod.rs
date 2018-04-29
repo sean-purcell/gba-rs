@@ -16,6 +16,8 @@ const IO_REG_SIZE: usize = 0x804;
 const DSPCNT: u32 = 0x0;
 const DISPSTAT: u32 = 0x4;
 const VCOUNT: u32 = 0x6;
+const KEYINPUT: u32 = 0x130;
+const KEYCNT: u32 = 0x132;
 const IE: u32 = 0x200;
 const IF: u32 = 0x202;
 const IME: u32 = 0x208;
@@ -114,6 +116,14 @@ impl<'a> IoReg<'a> {
             0x38 | 0x3a | 0x3c | 0x3e => self.ppu.update_bg3ref(),
             0x202 => self.disable_intrreq(new),
             0x102 | 0x106 | 0x10a | 0x10e => self.timers.updated((addr - 0x102) / 4, old, new),
+            0x130 => {
+                let keycnt = self.get_priv(KEYCNT);
+                self.check_key_intr(keycnt, new);
+            }
+            0x132 => {
+                let keyinput = self.get_priv(KEYINPUT);
+                self.check_key_intr(keyinput, new);
+            }
             _ => (),
         }
     }

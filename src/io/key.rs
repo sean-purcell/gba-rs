@@ -1,6 +1,8 @@
 use sdl2::keyboard::{KeyboardState, Scancode};
 
-use super::IoReg;
+use bit_util::bit;
+
+use super::{IoReg, KEYINPUT, KEYCNT};
 
 pub struct KeyState {
     a: bool,
@@ -43,6 +45,23 @@ impl<'a> IoReg<'a> {
             ((state.d as u16) << 7) | ((state.br as u16) << 8) |
             ((state.bl as u16) << 9);
         let reg = !vals & 0x3ff;
-        self.set_priv(0x130, reg);
+        self.set_priv(KEYINPUT, reg);
+
+        let keycnt = self.get_priv(KEYCNT);
+        self.check_key_intr(reg, keycnt);
+    }
+
+    pub(super) fn check_key_intr(&mut self, keyinput: u16, keycnt: u16) {
+        if bit(keycnt as u32, 14) == 1 {
+            let mask = keycnt & 1023;
+            let intr = if bit(keycnt as u32, 15) == 0 {
+                keyinput & mask != 0
+            } else {
+                keyinput & mask == mask
+            };
+            if intr {
+                self.raise_interrupt(12);
+            }
+        }
     }
 }
