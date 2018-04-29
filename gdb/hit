@@ -1,0 +1,2 @@
+p log::set_max_level(4)
+enable 2
