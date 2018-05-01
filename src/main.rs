@@ -89,6 +89,7 @@ fn run_emu() -> Result<()> {
                     Err(err) => Err(err.description().to_string()),
                 }),
         )
+        .arg(Arg::with_name("step-frames").short("s").long("step"))
         .arg(Arg::with_name("quiet").short("q").long("quiet"))
         .get_matches();
 
@@ -125,6 +126,7 @@ fn run_gba(app_m: &ArgMatches) -> Result<()> {
     let opts = gba::Options {
         fps_limit: app_m.value_of("fps-limit").unwrap() == "true",
         breaks: breaks,
+        step_frames: app_m.is_present("step-frames"),
         ..Default::default()
     };
 

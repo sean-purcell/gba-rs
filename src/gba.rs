@@ -32,6 +32,7 @@ const CYCLES_PER_FRAME: u64 = 280896;
 pub struct Options {
     pub fps_limit: bool,
     pub breaks: Vec<u32>,
+    pub step_frames: bool,
 }
 
 impl Default for Options {
@@ -39,6 +40,7 @@ impl Default for Options {
         Options {
             fps_limit: true,
             breaks: Default::default(),
+            step_frames: false,
         }
     }
 }
@@ -120,6 +122,7 @@ impl<'a> Gba<'a> {
     }
 
     pub fn run(&mut self) -> Result<()> {
+        let mut frame = 0;
         let mut event_pump = self.ctx.event_pump().unwrap();
 
         let frame_duration = Duration::new(
@@ -137,19 +140,32 @@ impl<'a> Gba<'a> {
             });
             flame::span_of("frame present", || self.canvas.present());
 
-            event_pump.pump_events();
-            let keys = event_pump.keyboard_state();
-            self.io.set_keyreg(&KeyState::new_from_keystate(&keys));
+            {
+                event_pump.pump_events();
+                let keys = event_pump.keyboard_state();
+                self.io.set_keyreg(&KeyState::new_from_keystate(&keys));
 
-            if keys.is_scancode_pressed(sdl2::keyboard::Scancode::Escape) {
-                break;
+                if keys.is_scancode_pressed(sdl2::keyboard::Scancode::Escape) {
+                    break;
+                }
+                if keys.is_scancode_pressed(sdl2::keyboard::Scancode::B) {
+                    use log;
+                    log::set_max_level(match log::max_level() {
+                        log::LevelFilter::Debug => log::LevelFilter::Error,
+                        _ => log::LevelFilter::Debug,
+                    });
+                }
             }
-            if keys.is_scancode_pressed(sdl2::keyboard::Scancode::B) {
-                use log;
-                log::set_max_level(match log::max_level() {
-                    log::LevelFilter::Debug => log::LevelFilter::Error,
-                    _ => log::LevelFilter::Debug,
-                });
+            if self.opts.step_frames {
+                info!("Frame: {}", frame);
+                loop {
+                    let event = event_pump.wait_event();
+                    if let sdl2::event::Event::KeyDown { scancode, .. } = event {
+                        if scancode == Some(sdl2::keyboard::Scancode::F) {
+                            break;
+                        }
+                    }
+                }
             }
 
             let end = Instant::now();
@@ -163,6 +179,7 @@ impl<'a> Gba<'a> {
 
             let now = Instant::now();
             info!("{} fps", 1_000_000_000u32 / ((now - start).subsec_nanos()));
+            frame += 1;
         }
         Ok(())
     }
