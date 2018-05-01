@@ -130,8 +130,7 @@ pub(super) fn render_obj_line(
             continue;
         };
 
-        let prio = (extract(a2, 10, 2) << 28) |
-            (o << 20) |
+        let prio = (extract(a2, 10, 2) << 28) | (o << 20) |
             if extract(a0, 10, 2) == 1 {
                 SEMITRANS
             } else {
@@ -150,9 +149,9 @@ pub(super) fn render_obj_line(
             xval = xval.wrapping_add(dx);
             yval = yval.wrapping_add(dy);
 
-            if sx >= 240 ||
-                    (!is_win && line[sx as usize] < prio) ||
-                    (is_win && owin[sx as usize] != 0) {
+            if sx >= 240 || (!is_win && line[sx as usize] < prio) ||
+                (is_win && owin[sx as usize] != 0)
+            {
                 continue;
             }
             if tx >= xsize || ty >= ysize {

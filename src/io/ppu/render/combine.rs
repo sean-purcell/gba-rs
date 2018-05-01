@@ -7,14 +7,16 @@ use super::object::*;
 #[inline]
 fn colour_unpack(c: u16) -> (u8, u8, u8) {
     let c = c as u32;
-    (extract(c, 0, 5) as u8, extract(c, 5, 5) as u8, extract(c, 10, 5) as u8)
+    (
+        extract(c, 0, 5) as u8,
+        extract(c, 5, 5) as u8,
+        extract(c, 10, 5) as u8,
+    )
 }
 
 #[inline]
 fn colour_repack(c: (u8, u8, u8)) -> u16 {
-    (c.0 as u16) |
-    ((c.1 as u16) << 5) |
-    ((c.2 as u16) << 10)
+    (c.0 as u16) | ((c.1 as u16) << 5) | ((c.2 as u16) << 10)
 }
 
 #[inline]
@@ -300,43 +302,42 @@ impl<'a> Ppu<'a> {
                 }
                 (f, fc)
             };
-            let (second, sc) =
-                if (fc & SEMITRANS != 0) || (bit(en_mask, 5) == 1 && effect == 1) {
-                    let mut sc = backdrop;
-                    let mut s = 5;
-                    macro_rules! check {
-                        ($c: expr, $i: expr) => {
-                            {
-                                let val = $c;
-                                if val < sc {
-                                    s = $i;
-                                    sc = val;
-                                }
+            let (second, sc) = if (fc & SEMITRANS != 0) || (bit(en_mask, 5) == 1 && effect == 1) {
+                let mut sc = backdrop;
+                let mut s = 5;
+                macro_rules! check {
+                    ($c: expr, $i: expr) => {
+                        {
+                            let val = $c;
+                            if val < sc {
+                                s = $i;
+                                sc = val;
                             }
-                        };
-                    }
-                    if objen && first != 4 {
-                        check!(self.state.lineo[ux], 4)
-                    }
-                    if bg0en && first != 0 {
-                        check!(self.state.line0[ux], 0)
-                    }
-                    if bg1en && first != 1 {
-                        check!(self.state.line1[ux], 1)
-                    }
-                    if bg2en && first != 2 {
-                        check!(self.state.line2[ux], 2)
-                    }
-                    if bg3en && first != 3 {
-                        check!(self.state.line3[ux], 3)
-                    }
-                    (s, sc)
-                } else {
-                    // bldcnt will be converted to u32,
-                    // so when we check if the bit is enabled for second target,
-                    // this will always be a 0 (0 + 16 and 8 + 16 will be checked)
-                    (16, TRANSPARENT)
-                };
+                        }
+                    };
+                }
+                if objen && first != 4 {
+                    check!(self.state.lineo[ux], 4)
+                }
+                if bg0en && first != 0 {
+                    check!(self.state.line0[ux], 0)
+                }
+                if bg1en && first != 1 {
+                    check!(self.state.line1[ux], 1)
+                }
+                if bg2en && first != 2 {
+                    check!(self.state.line2[ux], 2)
+                }
+                if bg3en && first != 3 {
+                    check!(self.state.line3[ux], 3)
+                }
+                (s, sc)
+            } else {
+                // bldcnt will be converted to u32,
+                // so when we check if the bit is enabled for second target,
+                // this will always be a 0 (0 + 16 and 8 + 16 will be checked)
+                (16, TRANSPARENT)
+            };
 
             self.state.line[ux] = if fc & SEMITRANS != 0 {
                 blend_semitrans(effect, bldcnt, bldalpha, bldy, first, fc, second, sc)
