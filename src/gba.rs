@@ -144,6 +144,13 @@ impl<'a> Gba<'a> {
             if keys.is_scancode_pressed(sdl2::keyboard::Scancode::Escape) {
                 break;
             }
+            if keys.is_scancode_pressed(sdl2::keyboard::Scancode::B) {
+                use log;
+                log::set_max_level(match log::max_level() {
+                    log::LevelFilter::Debug => log::LevelFilter::Error,
+                    _ => log::LevelFilter::Debug,
+                });
+            }
 
             let end = Instant::now();
             if self.opts.fps_limit {
