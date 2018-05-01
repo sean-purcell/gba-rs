@@ -4,6 +4,8 @@ use super::*;
 
 use mmu::gba::Gba as GbaMmu;
 
+pub(super) const SEMITRANS: u32 = 1 << 16;
+
 trait Dspcnt {
     fn layout2d(self) -> bool;
     fn objwin_enable(self) -> bool;
@@ -81,10 +83,6 @@ pub(super) fn render_obj_line(
             continue;
         }
 
-        if iy == yarea / 2 {
-            debug!("hi");
-        }
-
         let (mut xval, mut yval, dx, dy) = if bit(a0, 8) == 1 {
             // instead of based around top-left, it is based around centre
             // q: screen coords, p: texture coords
@@ -119,6 +117,7 @@ pub(super) fn render_obj_line(
         };
 
         let palette_mode = bit(a0, 13);
+        let is_win = extract(a0, 10, 2) == 2;
 
         // if 2d layout mode is enabled, bottom bit of tile is ignored
         let (tbase, row_inc) = if dspcnt.layout2d() {
@@ -131,9 +130,10 @@ pub(super) fn render_obj_line(
             continue;
         };
 
-        let prio = extract(a2, 10, 2) << 28 |
+        let prio = (extract(a2, 10, 2) << 28) |
+            (o << 20) |
             if extract(a0, 10, 2) == 1 {
-                1 << 16 /* semi-transparent */
+                SEMITRANS
             } else {
                 0
             };
@@ -143,8 +143,6 @@ pub(super) fn render_obj_line(
         let col_inc = palette_mode + 1;
 
         let x0 = extract(a1, 0, 9);
-
-        let xflip = bit(a1, 12) == 1;
         for x in x0..x0 + xarea {
             let sx = x % 512;
 
@@ -152,7 +150,9 @@ pub(super) fn render_obj_line(
             xval = xval.wrapping_add(dx);
             yval = yval.wrapping_add(dy);
 
-            if sx >= 240 || line[sx as usize] != TRANSPARENT {
+            if sx >= 240 ||
+                    (!is_win && line[sx as usize] < prio) ||
+                    (is_win && owin[sx as usize] != 0) {
                 continue;
             }
             if tx >= xsize || ty >= ysize {
@@ -175,8 +175,10 @@ pub(super) fn render_obj_line(
             }
 
             // if in window mode
-            if extract(a0, 10, 2) == 2 {
-                owin[sx as usize] = 1;
+            if is_win {
+                if objwin {
+                    owin[sx as usize] = 1;
+                }
             } else {
                 let colour = mmu.pram.load16(
                     0x200 + palette * 32 + (palette_colour as u32) * 2,
