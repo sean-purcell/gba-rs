@@ -98,7 +98,8 @@ impl<'a> Gba<'a> {
             );
 
             use cpu::reg;
-            ptr::write(&mut gba.cpu, Cpu::new(Shared::new(&mut gba.mmu), &[]));
+            let mmu = Shared::new(&mut gba.mmu);
+            ptr::write(&mut gba.cpu, Cpu::new(mmu, &[]));
             gba.cpu.init_arm();
             let opts = Shared::new(&mut gba.opts);
             gba.cpu.set_breaks(opts.breaks.iter());
@@ -114,7 +115,7 @@ impl<'a> Gba<'a> {
 
             let cpu = Shared::new(&mut gba.cpu);
             let ppu = Shared::new(&mut gba.ppu);
-            gba.io.init(cpu, ppu);
+            gba.io.init(cpu, mmu, ppu);
 
 
             gba

@@ -1,8 +1,10 @@
 pub mod ppu;
 pub mod key;
+mod dma;
 mod timer;
 
 use self::ppu::Ppu;
+use self::dma::Dma;
 use self::timer::Timers;
 
 use cpu::{Cpu, reg, exception};
@@ -26,9 +28,11 @@ pub struct IoReg<'a> {
     reg: Ram,
 
     cpu: Shared<Cpu<GbaMmu<'a>>>,
+    mmu: Shared<GbaMmu<'a>>,
     ppu: Shared<Ppu<'a>>,
 
     timers: Timers<'a>,
+    dma: Dma<'a>,
 }
 
 impl<'a> IoReg<'a> {
@@ -36,8 +40,10 @@ impl<'a> IoReg<'a> {
         let mut io = IoReg {
             reg: Ram::new(IO_REG_SIZE),
             cpu: Shared::empty(),
+            mmu: Shared::empty(),
             ppu: Shared::empty(),
             timers: Default::default(),
+            dma: Default::default(),
         };
         io.set_initial();
         io
@@ -50,12 +56,14 @@ impl<'a> IoReg<'a> {
         self.reg.set16(0x36, 0x100);
     }
 
-    pub fn init(&mut self, cpu: Shared<Cpu<GbaMmu<'a>>>, ppu: Shared<Ppu<'a>>) {
+    pub fn init(&mut self, cpu: Shared<Cpu<GbaMmu<'a>>>, mmu: Shared<GbaMmu<'a>>, ppu: Shared<Ppu<'a>>) {
         self.cpu = cpu;
+        self.mmu = mmu;
         self.ppu = ppu;
 
         let io = Shared::new(self);
         self.timers.init(io);
+        self.dma.init(io);
     }
 
     pub fn cycle(&mut self) {
@@ -114,7 +122,7 @@ impl<'a> IoReg<'a> {
         match addr {
             0x28 | 0x2a | 0x2c | 0x2e => self.ppu.update_bg2ref(),
             0x38 | 0x3a | 0x3c | 0x3e => self.ppu.update_bg3ref(),
-            0x202 => self.disable_intrreq(new),
+            0xBA | 0xC6 | 0xD2 | 0xDE => self.dma.updated(addr - 0xB0, old, new),
             0x102 | 0x106 | 0x10a | 0x10e => self.timers.updated((addr - 0x102) / 4, old, new),
             0x130 => {
                 let keycnt = self.get_priv(KEYCNT);
@@ -124,6 +132,7 @@ impl<'a> IoReg<'a> {
                 let keyinput = self.get_priv(KEYINPUT);
                 self.check_key_intr(keyinput, new);
             }
+            0x202 => self.disable_intrreq(new),
             _ => (),
         }
     }

@@ -7,6 +7,7 @@ use mmu::gba::Gba as GbaMmu;
 use shared::Shared;
 
 use super::*;
+use super::dma::Trigger;
 
 mod render;
 
@@ -119,6 +120,7 @@ impl<'a> Ppu<'a> {
             self.io.raise_interrupt(1);
         }
         self.io.set_priv(DISPSTAT, ds);
+        self.io.dma.trigger(Trigger::HBlank);
     }
 
     fn vblank(&mut self) {
@@ -128,6 +130,7 @@ impl<'a> Ppu<'a> {
             self.io.raise_interrupt(0);
         }
         self.io.set_priv(DISPSTAT, ds);
+        self.io.dma.trigger(Trigger::VBlank);
     }
 
     fn vblank_end(&mut self) {
