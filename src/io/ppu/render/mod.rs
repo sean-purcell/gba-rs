@@ -25,15 +25,6 @@ impl<'a> Ppu<'a> {
         let dspcnt = self.io.get_priv(0);
         let mode = extract(dspcnt as u32, 0, 3);
         debug!("Rendering mode {} scanline: {:#06x}", mode, dspcnt);
-        /*
-        match mode {
-            0 => self.render_line_mode0(row, dspcnt),
-            1 => self.render_line_mode1(row, dspcnt),
-            2 => self.render_line_mode2(row, dspcnt),
-            3 | 4 | 5 => self.render_line_mode345(row, dspcnt),
-            6 | 7 => warn!("Invalid display mode"),
-            _ => unreachable!(),
-        };*/
         self.combine_line(row, dspcnt);
 
         for x in 0..COLS {

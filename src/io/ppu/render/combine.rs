@@ -50,7 +50,7 @@ fn brighten_component(evy: u32, c: u8) -> u8 {
 #[inline]
 fn darken_component(evy: u32, c: u8) -> u8 {
     let c = c as i32;
-    max(31, c - (evy as i32 * c) / 16) as u8
+    max(0, c - (evy as i32 * c) / 16) as u8
 }
 
 #[inline]
@@ -347,5 +347,22 @@ impl<'a> Ppu<'a> {
                 fc
             };
         }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn test_alpha_blend1() {
+        let c1 = colour_repack((31, 31, 0)) as u32;
+        let c2 = colour_repack((0, 27, 31)) as u32;
+
+        let bldalpha = (8 << 8) | (8 << 0);
+
+        let cr = colour_unpack(alpha_blend(bldalpha, c1, c2) as u16);
+
+        assert_eq!((15, 29, 15), cr);
     }
 }
