@@ -120,7 +120,9 @@ impl<'a> Ppu<'a> {
             self.io.raise_interrupt(1);
         }
         self.io.set_priv(DISPSTAT, ds);
-        self.io.dma.trigger(Trigger::HBlank);
+        if self.row < 160 {
+            self.io.dma.trigger(Trigger::HBlank);
+        }
     }
 
     fn vblank(&mut self) {
