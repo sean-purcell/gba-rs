@@ -64,7 +64,8 @@ fn run_emu() -> Result<()> {
                 .required(false)
                 .takes_value(true)
                 .value_name("mode")
-                .possible_values(&["file", "html"]),
+                .possible_values(&["file", "html"])
+                .help("Whether to write out flame values to file and how"),
         )
         .arg(
             Arg::with_name("fps-limit")
@@ -74,7 +75,8 @@ fn run_emu() -> Result<()> {
                 .takes_value(true)
                 .value_name("bool")
                 .possible_values(&["true", "false"])
-                .default_value("true"),
+                .default_value("true")
+                .help("If true, limits the frame-rate to the GBA frame rate (~60fps)"),
         )
         .arg(
             Arg::with_name("breakpoints")
@@ -87,10 +89,15 @@ fn run_emu() -> Result<()> {
                 .validator(|s| match u32::from_str_radix(s.as_str(), 16) {
                     Ok(_) => Ok(()),
                     Err(err) => Err(err.description().to_string()),
-                }),
+                })
+                .help("A list of addresses to warn when the CPU hits"),
         )
-        .arg(Arg::with_name("step-frames").short("s").long("step"))
-        .arg(Arg::with_name("quiet").short("q").long("quiet"))
+        .arg(Arg::with_name("step-frames").short("s").long("step")
+             .help("Step through the frames step by step with the F key"))
+        .arg(Arg::with_name("quiet").short("q").long("quiet")
+             .help("Turn off logging on startup, ignoring environment settings"))
+        .arg(Arg::with_name("direct").short("d").long("direct")
+             .help("Boot directly to the ROM instead of booting the BIOS"))
         .get_matches();
 
     if app_m.is_present("quiet") {
@@ -127,6 +134,7 @@ fn run_gba(app_m: &ArgMatches) -> Result<()> {
         fps_limit: app_m.value_of("fps-limit").unwrap() == "true",
         breaks: breaks,
         step_frames: app_m.is_present("step-frames"),
+        direct_boot: app_m.is_present("direct"),
         ..Default::default()
     };
 

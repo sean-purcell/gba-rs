@@ -33,6 +33,7 @@ pub struct Options {
     pub fps_limit: bool,
     pub breaks: Vec<u32>,
     pub step_frames: bool,
+    pub direct_boot: bool,
 }
 
 impl Default for Options {
@@ -41,6 +42,7 @@ impl Default for Options {
             fps_limit: true,
             breaks: Default::default(),
             step_frames: false,
+            direct_boot: false,
         }
     }
 }
@@ -100,7 +102,11 @@ impl<'a> Gba<'a> {
             use cpu::reg;
             let mmu = Shared::new(&mut gba.mmu);
             ptr::write(&mut gba.cpu, Cpu::new(mmu, &[]));
-            gba.cpu.init_arm();
+            if gba.opts.direct_boot {
+                gba.cpu.init_direct();
+            } else {
+                gba.cpu.init_arm();
+            }
             let opts = Shared::new(&mut gba.opts);
             gba.cpu.set_breaks(opts.breaks.iter());
 
