@@ -56,7 +56,12 @@ impl<'a> IoReg<'a> {
         self.reg.set16(0x36, 0x100);
     }
 
-    pub fn init(&mut self, cpu: Shared<Cpu<GbaMmu<'a>>>, mmu: Shared<GbaMmu<'a>>, ppu: Shared<Ppu<'a>>) {
+    pub fn init(
+        &mut self,
+        cpu: Shared<Cpu<GbaMmu<'a>>>,
+        mmu: Shared<GbaMmu<'a>>,
+        ppu: Shared<Ppu<'a>>,
+    ) {
         self.cpu = cpu;
         self.mmu = mmu;
         self.ppu = ppu;

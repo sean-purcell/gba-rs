@@ -36,16 +36,20 @@ enum Register {
 
 fn addr_bits(reg: Register, ch: usize) -> u32 {
     match reg {
-        Register::Source => match ch {
-            0 => 27,
-            1 | 2 | 3 => 28,
-            _ => unreachable!(),
-        },
-        Register::Dest => match ch {
-            0 | 1 | 2 => 27,
-            3 => 28,
-            _ => unreachable!(),
-        },
+        Register::Source => {
+            match ch {
+                0 => 27,
+                1 | 2 | 3 => 28,
+                _ => unreachable!(),
+            }
+        }
+        Register::Dest => {
+            match ch {
+                0 | 1 | 2 => 27,
+                3 => 28,
+                _ => unreachable!(),
+            }
+        }
     }
 }
 
@@ -93,12 +97,10 @@ impl<'a> Dma<'a> {
         let base = 0xB0 + 12 * ch as u32;
         self.chs[ch].set_count(self.io.get_priv(base + 8), ch);
         if !repeat || extract(ctrl as u32, 5, 2) == 3 {
-            self.chs[ch].set_addr(Register::Dest, ch,
-                self.io.reg.load32(base + 4));
+            self.chs[ch].set_addr(Register::Dest, ch, self.io.reg.load32(base + 4));
         }
         if !repeat {
-            self.chs[ch].set_addr(Register::Source, ch,
-                self.io.reg.load32(base));
+            self.chs[ch].set_addr(Register::Source, ch, self.io.reg.load32(base));
         }
     }
 
@@ -132,11 +134,14 @@ fn do_copy<'a>(regs: &mut DmaCh, mmu: &mut GbaMmu<'a>, ctrl: u16) {
         0 => word,
         1 => 0u32.wrapping_sub(word),
         2 => 0,
-        3 => { warn!("Invalid source increment setting"); word },
+        3 => {
+            warn!("Invalid source increment setting");
+            word
+        }
         _ => unreachable!(),
     };
 
-    regs.sad &= !(word-1);
+    regs.sad &= !(word - 1);
     // FIXME: DMA copying from BIOS memory should write 0's when not executing
     // BIOS code
     for _ in 0..regs.len {

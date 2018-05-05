@@ -76,7 +76,9 @@ fn run_emu() -> Result<()> {
                 .value_name("bool")
                 .possible_values(&["true", "false"])
                 .default_value("true")
-                .help("If true, limits the frame-rate to the GBA frame rate (~60fps)"),
+                .help(
+                    "If true, limits the frame-rate to the GBA frame rate (~60fps)",
+                ),
         )
         .arg(
             Arg::with_name("breakpoints")
@@ -92,12 +94,15 @@ fn run_emu() -> Result<()> {
                 })
                 .help("A list of addresses to warn when the CPU hits"),
         )
-        .arg(Arg::with_name("step-frames").short("s").long("step")
-             .help("Step through the frames step by step with the F key"))
-        .arg(Arg::with_name("quiet").short("q").long("quiet")
-             .help("Turn off logging on startup, ignoring environment settings"))
-        .arg(Arg::with_name("direct").short("d").long("direct")
-             .help("Boot directly to the ROM instead of booting the BIOS"))
+        .arg(Arg::with_name("step-frames").short("s").long("step").help(
+            "Step through the frames step by step with the F key",
+        ))
+        .arg(Arg::with_name("quiet").short("q").long("quiet").help(
+            "Turn off logging on startup, ignoring environment settings",
+        ))
+        .arg(Arg::with_name("direct").short("d").long("direct").help(
+            "Boot directly to the ROM instead of booting the BIOS",
+        ))
         .get_matches();
 
     if app_m.is_present("quiet") {
