@@ -76,6 +76,10 @@ impl<'a> IoReg<'a> {
         self.check_interrupt();
     }
 
+    pub fn dma_length(&self) -> u32 {
+        self.dma.length()
+    }
+
     fn check_interrupt(&mut self) {
         let ir = self.get_priv(IF); // IF register, if is a keyword though
         if (self.get_priv(IME) & 1) != 0 && ir != 0 && self.cpu.irq_enable() {

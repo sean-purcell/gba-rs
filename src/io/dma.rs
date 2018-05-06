@@ -12,6 +12,8 @@ const CHANNELS: usize = 4;
 pub struct Dma<'a> {
     chs: [DmaCh; CHANNELS],
     io: Shared<IoReg<'a>>,
+
+    active_len: u32,
 }
 
 #[derive(Copy, Clone, Default)]
@@ -92,6 +94,10 @@ impl<'a> Dma<'a> {
         }
     }
 
+    pub fn length(&self) -> u32 {
+        self.active_len
+    }
+
     fn refresh(&mut self, ch: usize, ctrl: u16, repeat: bool) {
         debug_assert!(ch < 4);
         let base = 0xB0 + 12 * ch as u32;
@@ -108,7 +114,11 @@ impl<'a> Dma<'a> {
         debug_assert!(ch < 4);
         let base = 0xB0 + 12 * ch as u32;
 
-        do_copy(&mut self.chs[ch], &mut self.io.mmu, ctrl);
+        let mut regs = &mut self.chs[ch];
+
+        self.active_len = regs.len;
+        do_copy(regs, &mut self.io.mmu, ctrl);
+        self.active_len = 0;
 
         if bit(ctrl as u32, 9) == 0 {
             let nctrl = ctrl & !(1 << 15);

@@ -9,6 +9,10 @@ use io::IoReg;
 use super::Mmu;
 use super::ram::Ram;
 
+mod save;
+
+use self::save::Eeprom;
+
 #[derive(Clone, Copy, PartialEq, Eq, Hash, Debug)]
 enum MemoryRange {
     Bios,
@@ -19,6 +23,7 @@ enum MemoryRange {
     VideoRam,
     ObjectAttr,
     GamePakRom,
+    GamePakEe,
     GamePakSram,
     Unused,
 }
@@ -37,6 +42,7 @@ impl MemoryRange {
             VideoRam    => (0x06000000, 0x06018000),
             ObjectAttr  => (0x07000000, 0x07000400),
             GamePakRom  => (0x08000000, 0x0E000000),
+            GamePakEe   => (0x0D000000, 0x0E000000),
             GamePakSram => (0x0E000000, 0x0E010000),
             Unused      => (0x00000000, 0xFFFFFFFF),
         }
@@ -67,6 +73,7 @@ impl MemoryRange {
             }
             ObjectAttr => addr & 0x3ff,
             GamePakRom => addr & 0x1ffffff,
+            GamePakEe => addr,
             GamePakSram => addr & 0xffff,
             _ => addr - self.bounds().0,
         }
@@ -84,7 +91,8 @@ impl MemoryRange {
             0x5 => Palette,
             0x6 => VideoRam,
             0x7 => ObjectAttr,
-            0x8 | 0x9 | 0xA | 0xB | 0xC | 0xD => GamePakRom,
+            0x8 | 0x9 | 0xA | 0xB | 0xC => GamePakRom,
+            0xD => GamePakEe,
             0xE | 0xF => GamePakSram,
             _ => unreachable!(),
         }
@@ -103,10 +111,13 @@ pub struct Gba<'a> {
     pub gram: Ram,
 
     pub io: Shared<IoReg<'a>>,
+    pub ee: Eeprom<'a>,
 }
 
 impl<'a> Gba<'a> {
     pub fn new(rom: GameRom, bios: GameRom, io: Shared<IoReg<'a>>) -> Gba {
+        let mut ee = Eeprom::default();
+        ee.init(io);
         Gba {
             bios: bios,
             bram: Ram::new(256 * 1024),
@@ -115,6 +126,7 @@ impl<'a> Gba<'a> {
             vram: Ram::new(128 * 1024),
             oam: Ram::new(1024),
             rom: rom,
+            ee: ee,
             gram: Ram::new(64 * 1024),
             io: io,
         }
@@ -133,6 +145,7 @@ impl<'a> Gba<'a> {
             VideoRam => Some((naddr, &self.vram)),
             ObjectAttr => Some((naddr, &self.oam)),
             GamePakRom => Some((naddr, &self.rom)),
+            GamePakEe => Some((naddr, &self.ee)),
             GamePakSram => Some((naddr, &self.gram)),
             _ => None,
         }
@@ -151,6 +164,7 @@ impl<'a> Gba<'a> {
             VideoRam => Some((naddr, &mut self.vram)),
             ObjectAttr => Some((naddr, &mut self.oam)),
             GamePakRom => Some((naddr, &mut self.rom)),
+            GamePakEe => Some((naddr, &mut self.ee)),
             GamePakSram => Some((naddr, &mut self.gram)),
             _ => None,
         }
