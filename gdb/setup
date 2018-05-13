@@ -1,4 +1,4 @@
 set environment RUST_LOG=debug
-break cpu/mod.rs:89
-break cpu/mod.rs:91
+break cpu/mod.rs:82
+break cpu/mod.rs:84
 disable 2

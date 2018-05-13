@@ -1,5 +1,6 @@
 use super::*;
 
+use mmu::Mmu;
 use mmu::gba::Gba as GbaMmu;
 
 pub enum RotScaleCtrl {
@@ -29,7 +30,7 @@ impl RotScaleCtrl {
         use self::RotScaleCtrl::*;
         match *self {
             TileMap(ctrl) => extract(ctrl as u32, 2, 2) * 16 * 1024,
-            Bitmap(dspcnt) => 0,
+            Bitmap(_dspcnt) => 0,
         }
     }
 
@@ -38,7 +39,7 @@ impl RotScaleCtrl {
         use self::RotScaleCtrl::*;
         match *self {
             TileMap(ctrl) => extract(ctrl as u32, 0, 2),
-            Bitmap(dspcnt) => 3,
+            Bitmap(_dspcnt) => 3,
         }
     }
 
@@ -66,7 +67,7 @@ impl RotScaleCtrl {
         use self::RotScaleCtrl::*;
         match *self {
             TileMap(ctrl) => bit(ctrl as u32, 13) == 1,
-            Bitmap(dspcnt) => false,
+            Bitmap(_dspcnt) => false,
         }
     }
 
@@ -74,7 +75,7 @@ impl RotScaleCtrl {
     fn is_palette(&self) -> bool {
         use self::RotScaleCtrl::*;
         match *self {
-            TileMap(ctrl) => true,
+            TileMap(_ctrl) => true,
             Bitmap(dspcnt) => {
                 match extract(dspcnt as u32, 0, 3) {
                     3 | 5 => false,
@@ -89,7 +90,6 @@ impl RotScaleCtrl {
 // FIXME: mosaic
 pub(super) fn render_rotscale_line(
     line: &mut LineBuf,
-    row: u32,
     mmu: &GbaMmu,
     bgref: &mut BgRef,
     params: RotScaleParams,

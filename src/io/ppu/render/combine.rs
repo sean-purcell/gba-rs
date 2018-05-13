@@ -4,6 +4,8 @@ use super::*;
 use super::background::*;
 use super::object::*;
 
+use mmu::Mmu;
+
 #[inline]
 fn colour_unpack(c: u16) -> (u8, u8, u8) {
     let c = c as u32;
@@ -111,7 +113,7 @@ fn blend_semitrans(
     bldcnt: u16,
     bldalpha: u16,
     bldy: u16,
-    f: u8,
+    _f: u8,
     fc: u32,
     s: u8,
     sc: u32,
@@ -166,7 +168,6 @@ impl<'a> Ppu<'a> {
 
                 render_rotscale_line(
                     &mut self.state.line2,
-                    row,
                     &self.mmu,
                     &mut self.state.bg2ref,
                     rparams,
@@ -193,7 +194,6 @@ impl<'a> Ppu<'a> {
 
                 render_rotscale_line(
                     &mut self.state.line3,
-                    row,
                     &self.mmu,
                     &mut self.state.bg3ref,
                     rparams,
@@ -205,7 +205,7 @@ impl<'a> Ppu<'a> {
         bg3en
     }
 
-    fn obj_drawline(&mut self, mode: u32, row: u32, dspcnt: u16) -> bool {
+    fn obj_drawline(&mut self, _mode: u32, row: u32, dspcnt: u16) -> bool {
         let objen = bit(dspcnt as u32, 12) == 1;
         if objen {
             render_obj_line(
@@ -267,9 +267,6 @@ impl<'a> Ppu<'a> {
             let bg2en = bg2en && bit(en_mask, 2) == 1;
             let bg3en = bg3en && bit(en_mask, 3) == 1;
             let objen = objen && bit(en_mask, 4) == 1;
-
-            // FIXME: special blend effects
-            let semitrans = objen && (self.state.lineo[ux] & SEMITRANS != 0);
 
             let (first, fc) = {
                 let mut fc = backdrop;
@@ -364,5 +361,17 @@ mod test {
         let cr = colour_unpack(alpha_blend(bldalpha, c1, c2) as u16);
 
         assert_eq!((15, 29, 15), cr);
+    }
+
+    #[test]
+    fn test_alpha_blend2() {
+        let c1 = colour_repack((0, 0, 0)) as u32;
+        let c2 = colour_repack((31, 31, 31)) as u32;
+
+        let bldalpha = (15 << 8) | (16 << 0);
+
+        let cr = colour_unpack(alpha_blend(bldalpha, c1, c2) as u16);
+
+        assert_eq!((29, 29, 29), cr);
     }
 }

@@ -9,9 +9,8 @@ use std::ops::{Deref, DerefMut};
 use byteorder::{ByteOrder, LittleEndian};
 
 use bit_util::{bit, extract, sign_extend};
-use mmu::Mmu;
 
-use super::{Ppu, COLS, ROWS, PIX_BYTES};
+use super::{Ppu, COLS, DSPCNT, PIX_BYTES};
 
 mod background;
 mod object;
@@ -22,7 +21,7 @@ const TRANSPARENT: u32 = 0xf0000000;
 impl<'a> Ppu<'a> {
     /// Renders the current line into the line field in state
     pub(super) fn render_line(&mut self, row: u32) {
-        let dspcnt = self.io.get_priv(0);
+        let dspcnt = self.io.get_priv(DSPCNT);
         let mode = extract(dspcnt as u32, 0, 3);
         debug!("Rendering mode {} scanline: {:#06x}", mode, dspcnt);
         self.combine_line(row, dspcnt);
@@ -35,78 +34,6 @@ impl<'a> Ppu<'a> {
             LittleEndian::write_u32(&mut self.pixels[off..off + PIX_BYTES], rgb);
         }
     }
-
-    /*
-    fn compute_colour(&self, x: u32, y: u32) -> Colour {
-        // Want to render pixel at col, row
-        let dspcnt = self.io.get_priv(0x000000) as u32;
-
-        // compute background colour
-        let bg = match extract(dspcnt, 0, 3) {
-            // mode
-            3 => self.get_colour_bg2(x, y),
-            6 | 7 => {
-                warn!("invalid mode");
-                None
-            }
-            _ => None,
-        };
-        match bg {
-            Some(c) => c,
-            None => (0, 0, 0),
-        }
-    }
-
-    fn get_colour_bg2(&self, x: u32, y: u32) -> Option<Colour> {
-        let (nx, ny) = self.compute_scale(x, y, Layer::Bg2);
-
-        // FIXME: replace with layer size
-        if nx < 240 && ny < 160 {
-            let idx = ny * 240 + nx;
-            // FIXME: do paletting
-            let colour = self.mmu.vram.load16(idx * 2);
-
-            Some(colour16_rgb(colour))
-        } else {
-            None
-        }
-    }
-
-    #[inline]
-    fn compute_scale(&self, x: u32, y: u32, bg: Layer) -> (u32, u32) {
-        let base = match bg {
-            Layer::Bg2 => 0x20,
-            Layer::Bg3 => 0x30,
-            _ => unreachable!(),
-        };
-
-        let xref = sign_extend(
-            (self.io.get_priv(base + 0x8) as u32) |
-                ((self.io.get_priv(base + 0xa) as u32) << 16),
-            28,
-        );
-        let yref = sign_extend(
-            (self.io.get_priv(base + 0xc) as u32) |
-                ((self.io.get_priv(base + 0xe) as u32) << 16),
-            28,
-        );
-        let a = self.io.get_priv(base + 0x0) as i16 as i32 as u32;
-        let b = self.io.get_priv(base + 0x2) as i16 as i32 as u32;
-        let c = self.io.get_priv(base + 0x4) as i16 as i32 as u32;
-        let d = self.io.get_priv(base + 0x6) as i16 as i32 as u32;
-
-        let dx = (x << 8).wrapping_sub(xref);
-        let dy = (y << 8).wrapping_sub(yref);
-        (
-            xref.wrapping_add(dx.wrapping_mul(a)).wrapping_add(
-                dy.wrapping_mul(b),
-            ) >> 16,
-            yref.wrapping_add(dx.wrapping_mul(c)).wrapping_add(
-                dy.wrapping_mul(d),
-            ) >> 16,
-        )
-    }
-    */
 }
 
 struct LineBuf {

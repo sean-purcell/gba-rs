@@ -36,9 +36,7 @@ enum State {
 
 impl<'a> Default for Eeprom<'a> {
     fn default() -> Self {
-        Eeprom {
-            ee: RefCell::new(Default::default()),
-        }
+        Eeprom { ee: RefCell::new(Default::default()) }
     }
 }
 
@@ -87,33 +85,33 @@ impl<'a> EepromInner<'a> {
         debug!("eeprom write: {}, current state: {:?}", bit, self.state);
 
         match self.state {
-            Idle => if bit == 1 {
-                self.state = ReadAddress;
-                self.bits = 1;
+            Idle => {
+                if bit == 1 {
+                    self.state = ReadAddress;
+                    self.bits = 1;
+                }
             }
-            ReadAddress => if self.bits < 2 {
-                self.write = bit == 0;
-                self.bits = 2;
-            } else {
-                self.addr = (self.addr << 1) | bit;
-                self.bits += 1;
-                let done = if self.bits == 16 && (dma_len == 17 || dma_len == 81) {
-                    // assume 14-bit bus width
-                    // FIXME: might be worth checking if the 0 is valid
-                    self.addr &= 0x3ff;
-                    true
-                } else if self.bits == 8 && (dma_len == 9 || dma_len == 73) {
-                    true
+            ReadAddress => {
+                if self.bits < 2 {
+                    self.write = bit == 0;
+                    self.bits = 2;
                 } else {
-                    false
-                };
-                if done {
-                    self.bits = 0;
-                    self.state = if self.write {
-                        WriteData
+                    self.addr = (self.addr << 1) | bit;
+                    self.bits += 1;
+                    let done = if self.bits == 16 && (dma_len == 17 || dma_len == 81) {
+                        // assume 14-bit bus width
+                        // FIXME: might be worth checking if the 0 is valid
+                        self.addr &= 0x3ff;
+                        true
+                    } else if self.bits == 8 && (dma_len == 9 || dma_len == 73) {
+                        true
                     } else {
-                        ConfirmRead
+                        false
                     };
+                    if done {
+                        self.bits = 0;
+                        self.state = if self.write { WriteData } else { ConfirmRead };
+                    }
                 }
             }
             WriteData => {
@@ -125,13 +123,13 @@ impl<'a> EepromInner<'a> {
             }
             ConfirmWrite => {
                 let addr = self.addr as usize * 8;
-                LittleEndian::write_u64(&mut self.mem[addr..addr+8], self.data);
+                LittleEndian::write_u64(&mut self.mem[addr..addr + 8], self.data);
                 // Idle will return a 1 for a read, so it will "Confirm" the write
                 self.reset();
             }
             ConfirmRead => {
                 let addr = self.addr as usize * 8;
-                self.data = LittleEndian::read_u64(&mut self.mem[addr..addr+8]);
+                self.data = LittleEndian::read_u64(&mut self.mem[addr..addr + 8]);
                 self.bits = 0;
                 self.state = ReadData;
             }
@@ -167,32 +165,32 @@ impl<'a> EepromInner<'a> {
 
 impl<'a> Mmu for Eeprom<'a> {
     #[inline]
-    fn load8(&self, addr: u32) -> u8 {
+    fn load8(&self, _addr: u32) -> u8 {
         self.ee.borrow_mut().read() as u8
     }
 
     #[inline]
-    fn set8(&mut self, addr: u32, val: u8) {
+    fn set8(&mut self, _addr: u32, val: u8) {
         self.ee.borrow_mut().write(val as u16)
     }
 
     #[inline]
-    fn load16(&self, addr: u32) -> u16 {
+    fn load16(&self, _addr: u32) -> u16 {
         self.ee.borrow_mut().read()
     }
 
     #[inline]
-    fn set16(&mut self, addr: u32, val: u16) {
+    fn set16(&mut self, _addr: u32, val: u16) {
         self.ee.borrow_mut().write(val)
     }
 
     #[inline]
-    fn load32(&self, addr: u32) -> u32 {
+    fn load32(&self, _addr: u32) -> u32 {
         self.ee.borrow_mut().read() as u32
     }
 
     #[inline]
-    fn set32(&mut self, addr: u32, val: u32) {
+    fn set32(&mut self, _addr: u32, val: u32) {
         self.ee.borrow_mut().write(val as u16)
     }
 }

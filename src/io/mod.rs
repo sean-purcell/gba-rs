@@ -7,7 +7,7 @@ use self::ppu::Ppu;
 use self::dma::Dma;
 use self::timer::Timers;
 
-use cpu::{Cpu, reg, exception};
+use cpu::{Cpu, exception};
 use mmu::Mmu;
 use mmu::gba::Gba as GbaMmu;
 use mmu::ram::Ram;

@@ -18,7 +18,6 @@ use shared::Shared;
 use Result;
 
 use cpu::Cpu;
-use cpu::mode::Mode;
 use io::IoReg;
 use io::key::KeyState;
 use io::ppu::{Ppu, ROWS, COLS};
@@ -99,7 +98,6 @@ impl<'a> Gba<'a> {
                 GbaMmu::new(rom, bios, Shared::new(&mut gba.io)),
             );
 
-            use cpu::reg;
             let mmu = Shared::new(&mut gba.mmu);
             ptr::write(&mut gba.cpu, Cpu::new(mmu, &[]));
             if gba.opts.direct_boot {

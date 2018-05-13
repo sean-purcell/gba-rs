@@ -84,13 +84,4 @@ mod test {
 
         assert_eq!(*b, 3);
     }
-
-    #[test]
-    fn test_boxes() {
-        trait B {}
-        impl B for u32 {}
-
-        let a: Box<u32> = Box::new(5);
-        let b: Box<B> = a;
-    }
 }

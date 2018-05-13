@@ -114,7 +114,7 @@ impl<'a> Dma<'a> {
         debug_assert!(ch < 4);
         let base = 0xB0 + 12 * ch as u32;
 
-        let mut regs = &mut self.chs[ch];
+        let regs = &mut self.chs[ch];
 
         self.active_len = regs.len;
         do_copy(regs, &mut self.io.mmu, ctrl);

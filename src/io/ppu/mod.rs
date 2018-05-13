@@ -2,7 +2,6 @@ use std::default::Default;
 
 use sdl2::render::Texture;
 
-use mmu::Mmu;
 use mmu::gba::Gba as GbaMmu;
 use shared::Shared;
 

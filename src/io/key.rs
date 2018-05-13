@@ -1,4 +1,4 @@
-use sdl2::keyboard::{KeyboardState, Scancode};
+use sdl2::keyboard::KeyboardState;
 
 use bit_util::bit;
 

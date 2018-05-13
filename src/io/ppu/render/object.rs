@@ -1,7 +1,6 @@
-use std::cmp::min;
-
 use super::*;
 
+use mmu::Mmu;
 use mmu::gba::Gba as GbaMmu;
 
 pub(super) const SEMITRANS: u32 = 1 << 16;
