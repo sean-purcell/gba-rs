@@ -262,7 +262,7 @@ impl<T: Mmu> Cpu<T> {
 
                 let addr = self.reg[reg::PC].wrapping_add(2).wrapping_add(offset * 4) & !3;
 
-                self.reg[rd] = self.mmu.load32(addr);
+                self.reg[rd] = self.load32(addr);
             }
             SingleXferR => {
                 let l = bit(inst, 11);
@@ -277,7 +277,7 @@ impl<T: Mmu> Cpu<T> {
                 match (l, b) {
                     (0, 0) => self.mmu.set32(addr & !3, self.reg[rd]),
                     (0, 1) => self.mmu.set8(addr, self.reg[rd] as u8),
-                    (1, 0) => self.reg[rd] = self.mmu.load32(addr & !3),
+                    (1, 0) => self.reg[rd] = self.load32(addr & !3),
                     (1, 1) => self.reg[rd] = self.mmu.load8(addr) as u32,
                     _ => unreachable!(),
                 };
@@ -314,7 +314,7 @@ impl<T: Mmu> Cpu<T> {
                     if l == 0 {
                         self.mmu.set32(addr, self.reg[rd]);
                     } else {
-                        self.reg[rd] = self.mmu.load32(addr);
+                        self.reg[rd] = self.load32(addr);
                     }
                 } else {
                     let addr = self.reg[rb].wrapping_add(offset);
@@ -350,7 +350,7 @@ impl<T: Mmu> Cpu<T> {
                 if l == 0 {
                     self.mmu.set32(addr, self.reg[rd]);
                 } else {
-                    self.reg[rd] = self.mmu.load32(addr);
+                    self.reg[rd] = self.load32(addr);
                 }
             }
             LoadAddr => {
@@ -408,7 +408,7 @@ impl<T: Mmu> Cpu<T> {
                     if l == 0 {
                         self.mmu.set32(idx_addr, self.reg[reg]);
                     } else {
-                        self.reg[reg] = self.mmu.load32(idx_addr) &
+                        self.reg[reg] = self.load32(idx_addr) &
                             if reg == reg::PC { !1 } else { !0 };
                     }
 
@@ -442,7 +442,7 @@ impl<T: Mmu> Cpu<T> {
                         };
                         self.mmu.set32(idx_addr, val);
                     } else {
-                        self.reg[reg] = self.mmu.load32(idx_addr);
+                        self.reg[reg] = self.load32(idx_addr);
                     }
 
                     rem -= 1 << reg;

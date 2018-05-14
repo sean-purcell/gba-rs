@@ -378,7 +378,7 @@ impl<T: Mmu> Cpu<T> {
                     };
                 } else {
                     self.reg[rd] = if b == 0 {
-                        let val = self.mmu.load32(addr & !3);
+                        let val = self.load32(addr & !3);
                         // we need to rotate it so the addressed offset is
                         // at the base
                         let offset = addr & 3;
@@ -501,7 +501,7 @@ impl<T: Mmu> Cpu<T> {
                             self.mmu.set32(idx_addr, val);
                         } else {
                             // load
-                            self.reg[r] = self.mmu.load32(idx_addr);
+                            self.reg[r] = self.load32(idx_addr);
                             if r == reg::PC && s == 1 {
                                 self.reg[reg::CPSR] = self.reg[reg::SPSR];
                             }
@@ -521,8 +521,8 @@ impl<T: Mmu> Cpu<T> {
                             self.mmu.set32(idx_addr, val);
                         } else {
                             // load
-                            self.reg.set(0, r, self.mmu.load32(idx_addr));
-                            self.reg[r] = self.mmu.load32(idx_addr);
+                            let val = self.load32(idx_addr);
+                            self.reg.set(0, r, val);
                         };
                         rem -= 1u32 << r;
                     }
@@ -539,7 +539,7 @@ impl<T: Mmu> Cpu<T> {
                 let addr = self.reg[rn] & !((1 - b) * 3);
 
                 let val = match b {
-                    0 => self.mmu.load32(addr),
+                    0 => self.load32(addr),
                     1 => self.mmu.load8(addr) as u32,
                     _ => unreachable!(),
                 };

@@ -12,6 +12,7 @@ pub mod reg;
 mod arm;
 mod thumb;
 mod util;
+mod mem;
 
 use self::reg::*;
 use self::exception::Exception;
@@ -80,7 +81,17 @@ impl<T: Mmu> Cpu<T> {
     pub fn cycle(&mut self) -> bool {
         if self.brk.contains(&self.reg[reg::PC]) {
             warn!("Breakpoint {:#010x} hit!", self.reg[reg::PC]);
+            warn!("{:#06x} {:#06x}", self.mmu.load16(0x2018778), self.mmu.load16(0x201877a));
         }
+
+        if self.reg[reg::PC] == 0x800196c && self.mmu.load16(0x2018778) == 0xffff {
+            error!("FOO");
+        }
+
+        if self.reg[reg::PC] == 0x805ab6c {
+            error!("BAR");
+        }
+
         if !self.thumb_mode() {
             self.execute_arm()
         } else {

@@ -97,17 +97,17 @@ fn run_emu() -> Result<()> {
         .arg(Arg::with_name("step-frames").short("s").long("step").help(
             "Step through the frames step by step with the F key",
         ))
-        .arg(Arg::with_name("quiet").short("q").long("quiet").help(
-            "Turn off logging on startup, ignoring environment settings",
+        .arg(Arg::with_name("quiet").short("q").long("quiet").multiple(true).help(
+            "Reduces logging level by one from env settings (multiple allowed)",
         ))
         .arg(Arg::with_name("direct").short("d").long("direct").help(
             "Boot directly to the ROM instead of booting the BIOS",
         ))
         .get_matches();
 
-    if app_m.is_present("quiet") {
-        info!("Disabling logging");
-        log::set_max_level(log::LevelFilter::Off);
+    for _ in 0..app_m.occurrences_of("quiet") {
+        info!("Reduce logging");
+        reduce_logging();
     }
 
     let res = run_gba(&app_m);
@@ -145,31 +145,18 @@ fn run_gba(app_m: &ArgMatches) -> Result<()> {
 
     let mut gba = gba::Gba::new(rom, bios, opts);
 
-    /*
-    gba.run();
-    let mut event_pump = gba.ctx.event_pump().unwrap();
-    let mut i = 0;
-    loop {
-        use sdl2;
-        i = (i + 1) % 255;
-        gba.canvas.set_draw_color(
-            sdl2::pixels::Color::RGB(i, 64, 255 - i),
-        );
-        gba.canvas.clear();
-        gba.canvas.set_draw_color(sdl2::pixels::Color::RGB(0, 0, 0));
-        gba.canvas.draw_point(sdl2::rect::Point::new(120, 80));
-        event_pump.pump_events();
-        let keys = event_pump.keyboard_state();
-        if keys.is_scancode_pressed(sdl2::keyboard::Scancode::Escape) {
-            break;
-        }
-        gba.canvas.present();
-
-        std::thread::sleep(std::time::Duration::new(0, 1_000_000_000u32 / 60));
-    }
-    */
-
     gba.run()
+}
+
+fn reduce_logging() {
+    use log::LevelFilter::*;
+    log::set_max_level(match log::max_level() {
+        Off | Error => Off,
+        Warn => Error,
+        Info => Warn,
+        Debug => Info,
+        Trace => Debug,
+    });
 }
 
 #[cfg(test)]
