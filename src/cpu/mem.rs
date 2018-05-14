@@ -16,4 +16,8 @@ impl<T: Mmu> Cpu<T> {
             val.rotate_right(shift)
         }
     }
+
+    pub(super) fn set32(&mut self, addr: u32, val: u32) {
+        self.mmu.set32(addr & !3, val);
+    }
 }
