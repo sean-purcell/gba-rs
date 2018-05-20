@@ -1,4 +1,10 @@
 set environment RUST_LOG=debug
-break cpu/mod.rs:82
-break cpu/mod.rs:84
+break gba_rs::cpu::at_breakpoint
+commands
+n
+end
+break gba_rs::cpu::at_cycle
+commands
+n
+end
 disable 2
