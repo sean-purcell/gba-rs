@@ -2,6 +2,7 @@ use std::result::Result;
 
 use bincode;
 use serde_json;
+use zstd;
 
 use serde::{Serialize, Serializer};
 use serde::ser::SerializeStruct;
@@ -32,10 +33,11 @@ impl<'a> Gba<'a> {
         path.push(format!("{}.{}", index, ext));
         match File::create(Path::new(&path)) {
             Ok(file) => {
+                let mut writer = zstd::Encoder::new(&file, 1).unwrap();
                 if self.opts.json_save {
-                    serde_json::to_writer_pretty(&file, self).unwrap();
+                    serde_json::to_writer_pretty(&mut writer, self).unwrap();
                 } else {
-                    bincode::serialize_into(&file, self).unwrap();
+                    bincode::serialize_into(&mut writer, self).unwrap();
                 }
                 info!("Saved file {:?}", path);
             },

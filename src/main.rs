@@ -8,6 +8,7 @@ extern crate sdl2;
 extern crate serde;
 #[macro_use] extern crate serde_derive;
 extern crate serde_json;
+extern crate zstd;
 
 extern crate flame;
 
