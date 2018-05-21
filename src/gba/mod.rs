@@ -1,6 +1,9 @@
 use std::boxed::Box;
 use std::default::Default;
+use std::ffi::{OsStr, OsString};
+use std::fs::File;
 use std::mem;
+use std::path::Path;
 use std::ptr;
 use std::time::{Duration, Instant};
 use std::thread;
@@ -9,6 +12,7 @@ use flame;
 
 use sdl2;
 use sdl2::Sdl;
+use sdl2::keyboard::Scancode;
 use sdl2::pixels::PixelFormatEnum;
 use sdl2::render::{Canvas, Texture, TextureCreator};
 use sdl2::video::{Window, WindowContext};
@@ -24,6 +28,8 @@ use io::ppu::{Ppu, ROWS, COLS};
 use mmu::gba::Gba as GbaMmu;
 use rom::GameRom;
 
+mod save_state;
+
 const CYCLES_PER_SEC: u64 = 16 * 1024 * 1024;
 const CYCLES_PER_FRAME: u64 = 280896;
 
@@ -33,6 +39,8 @@ pub struct Options {
     pub breaks: Vec<u32>,
     pub step_frames: bool,
     pub direct_boot: bool,
+    pub save_file: OsString,
+    pub json_save: bool,
 }
 
 impl Default for Options {
@@ -42,6 +50,8 @@ impl Default for Options {
             breaks: Default::default(),
             step_frames: false,
             direct_boot: false,
+            save_file: OsStr::new("gba").to_os_string(),
+            json_save: false,
         }
     }
 }
@@ -150,10 +160,10 @@ impl<'a> Gba<'a> {
                 let keys = event_pump.keyboard_state();
                 self.io.set_keyreg(&KeyState::new_from_keystate(&keys));
 
-                if keys.is_scancode_pressed(sdl2::keyboard::Scancode::Escape) {
+                if keys.is_scancode_pressed(Scancode::Escape) {
                     break;
                 }
-                if keys.is_scancode_pressed(sdl2::keyboard::Scancode::B) {
+                if keys.is_scancode_pressed(Scancode::B) {
                     use log;
                     log::set_max_level(match log::max_level() {
                         log::LevelFilter::Debug => log::LevelFilter::Error,
@@ -161,12 +171,28 @@ impl<'a> Gba<'a> {
                     });
                 }
             }
+            loop {
+                let ctrl = {
+                    let keys = event_pump.keyboard_state();
+                    keys.is_scancode_pressed(Scancode::LCtrl) ||
+                        keys.is_scancode_pressed(Scancode::RCtrl)
+                };
+                if let Some(event) = event_pump.poll_event() {
+                    if let sdl2::event::Event::KeyDown { scancode, .. } = event {
+                        if let Some(code) = scancode {
+                            self.check_save(code, ctrl);
+                        }
+                    }
+                } else {
+                    break;
+                }
+            }
             if self.opts.step_frames {
                 info!("Frame: {}", frame);
                 loop {
                     let event = event_pump.wait_event();
                     if let sdl2::event::Event::KeyDown { scancode, .. } = event {
-                        if scancode == Some(sdl2::keyboard::Scancode::F) {
+                        if scancode == Some(Scancode::F) {
                             break;
                         }
                     }

@@ -1,3 +1,6 @@
+use serde::{Serialize, Serializer};
+use serde::ser::SerializeStruct;
+
 // FIXME: implement open bus
 // FIXME: move unaligned access logic here from CPU
 use shared::Shared;
@@ -241,4 +244,18 @@ impl<'a> Mmu for Gba<'a> {
 
 fn warning(addr: u32) {
     warn!("Access to unmapped memory: {:#010x}", addr);
+}
+
+impl<'a> Serialize for Gba<'a> {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        let mut s = serializer.serialize_struct("gba_rs::mmu::gba::Gba", 7)?;
+        s.serialize_field("bram", &self.bram)?;
+        s.serialize_field("cram", &self.cram)?;
+        s.serialize_field("pram", &self.pram)?;
+        s.serialize_field("vram", &self.vram)?;
+        s.serialize_field("oam", &self.oam)?;
+        s.serialize_field("gram", &self.gram)?;
+        s.serialize_field("ee", &self.ee)?;
+        s.end()
+    }
 }

@@ -1,6 +1,7 @@
 use std::default::Default;
 
 use sdl2::render::Texture;
+use serde::{Serialize, Serializer, Deserialize};
 
 use mmu::gba::Gba as GbaMmu;
 use shared::Shared;
@@ -165,5 +166,18 @@ impl<'a> Ppu<'a> {
         let yh = self.io.get_priv(0x3e);
 
         self.state.bg3ref = render::BgRef::new(xl, xh, yl, yh);
+    }
+}
+
+impl<'a> Serialize for Ppu<'a> {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        // Don't serialize the pixels, most of the time save states will be at
+        // a frame boundary anyway
+        let mut s = serializer.serialize_struct("gba_rs::io::ppu::render::Ppu", 4)?;
+        s.serialize_field("col", &self.col)?;
+        s.serialize_field("row", &self.row)?;
+        s.serialize_field("delay", &self.delay)?;
+        s.serialize_field("state", &self.state)?;
+        s.end()
     }
 }

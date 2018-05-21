@@ -1,10 +1,13 @@
+extern crate bincode;
 extern crate byteorder;
 extern crate clap;
-#[macro_use]
-extern crate log;
+#[macro_use] extern crate log;
 extern crate env_logger;
 extern crate memmap;
 extern crate sdl2;
+extern crate serde;
+#[macro_use] extern crate serde_derive;
+extern crate serde_json;
 
 extern crate flame;
 
@@ -94,7 +97,7 @@ fn run_emu() -> Result<()> {
                 })
                 .help("A list of addresses to warn when the CPU hits"),
         )
-        .arg(Arg::with_name("step-frames").short("s").long("step").help(
+        .arg(Arg::with_name("step-frames").short("p").long("step").help(
             "Step through the frames step by step with the F key",
         ))
         .arg(Arg::with_name("quiet").short("q").long("quiet").multiple(true).help(
@@ -103,6 +106,23 @@ fn run_emu() -> Result<()> {
         .arg(Arg::with_name("direct").short("d").long("direct").help(
             "Boot directly to the ROM instead of booting the BIOS",
         ))
+        .arg(Arg::with_name("save-file")
+             .short("s")
+             .long("save")
+             .required(false)
+             .takes_value(true)
+             .default_value("save")
+             .help("The save file prefix to save to"),
+        )
+        .arg(Arg::with_name("save-type")
+             .short("t")
+             .long("type")
+             .required(false)
+             .takes_value(true)
+             .possible_values(&["bin", "json"])
+             .default_value("bin")
+             .help("The type of save file to create")
+        )
         .get_matches();
 
     for _ in 0..app_m.occurrences_of("quiet") {
@@ -140,6 +160,8 @@ fn run_gba(app_m: &ArgMatches) -> Result<()> {
         breaks: breaks,
         step_frames: app_m.is_present("step-frames"),
         direct_boot: app_m.is_present("direct"),
+        save_file: app_m.value_of_os("save-file").unwrap().to_os_string(),
+        json_save: app_m.value_of("save-type").unwrap() == "json",
         ..Default::default()
     };
 

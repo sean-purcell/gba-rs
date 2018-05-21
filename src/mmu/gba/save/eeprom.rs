@@ -1,20 +1,24 @@
 use std::cell::RefCell;
+use std::ops::{Deref, DerefMut};
 
-use byteorder::{ByteOrder, LittleEndian};
+use serde::{Serialize, Serializer};
+use serde::ser::SerializeStruct;
+use serde::ser::SerializeTuple;
+
 use shared::Shared;
 
 use io::IoReg;
 
 use mmu::Mmu;
 
-const MEM_SIZE: usize = 8192;
+const MEM_SIZE: usize = 1024;
 
 pub struct Eeprom<'a> {
     ee: RefCell<EepromInner<'a>>,
 }
 
 struct EepromInner<'a> {
-    mem: [u8; MEM_SIZE],
+    mem: EepromMem,
     state: State,
     write: bool,
     addr: u16,
@@ -24,7 +28,7 @@ struct EepromInner<'a> {
     io: Shared<IoReg<'a>>,
 }
 
-#[derive(Copy, Clone, Debug, PartialEq)]
+#[derive(Copy, Clone, Debug, PartialEq, Serialize, Deserialize)]
 enum State {
     Idle,
     ReadAddress,
@@ -49,7 +53,7 @@ impl<'a> Eeprom<'a> {
 impl<'a> Default for EepromInner<'a> {
     fn default() -> Self {
         EepromInner {
-            mem: [0u8; MEM_SIZE],
+            mem: Default::default(),
             state: State::Idle,
             write: false,
             addr: 0,
@@ -122,14 +126,12 @@ impl<'a> EepromInner<'a> {
                 }
             }
             ConfirmWrite => {
-                let addr = self.addr as usize * 8;
-                LittleEndian::write_u64(&mut self.mem[addr..addr + 8], self.data);
+                self.mem[self.addr as usize] = self.data;
                 // Idle will return a 1 for a read, so it will "Confirm" the write
                 self.reset();
             }
             ConfirmRead => {
-                let addr = self.addr as usize * 8;
-                self.data = LittleEndian::read_u64(&mut self.mem[addr..addr + 8]);
+                self.data = self.mem[self.addr as usize];
                 self.bits = 0;
                 self.state = ReadData;
             }
@@ -163,6 +165,37 @@ impl<'a> EepromInner<'a> {
     }
 }
 
+struct EepromMem([u64; MEM_SIZE]);
+
+impl Default for EepromMem {
+    fn default() -> Self {
+        EepromMem([0u64; MEM_SIZE])
+    }
+}
+
+impl Deref for EepromMem {
+    type Target = [u64];
+    fn deref(&self) -> &[u64] {
+        &self.0
+    }
+}
+
+impl DerefMut for EepromMem {
+    fn deref_mut(&mut self) -> &mut [u64] {
+        &mut self.0
+    }
+}
+
+impl Serialize for EepromMem {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        let mut s = serializer.serialize_tuple(MEM_SIZE)?;
+        for val in self.0.iter() {
+            s.serialize_element(val)?;
+        }
+        s.end()
+    }
+}
+
 impl<'a> Mmu for Eeprom<'a> {
     #[inline]
     fn load8(&self, _addr: u32) -> u8 {
@@ -192,5 +225,23 @@ impl<'a> Mmu for Eeprom<'a> {
     #[inline]
     fn set32(&mut self, _addr: u32, val: u32) {
         self.ee.borrow_mut().write(val as u16)
+    }
+}
+
+impl<'a> Serialize for Eeprom<'a> {
+    // Note: Everything other than mem shouldn't actually need serializing
+    // DMA currently is instantaneous and so it can't span a frame barrier
+    // (where the save state takes place)
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        let mut s = serializer.serialize_struct("gba_rs::gba::save::eeprom::Eeprom", 6)?;
+        let ee = self.ee.borrow();
+
+        s.serialize_field("mem", &ee.mem)?;
+        s.serialize_field("state", &ee.state)?;
+        s.serialize_field("write", &ee.write)?;
+        s.serialize_field("addr", &ee.addr)?;
+        s.serialize_field("bits", &ee.bits)?;
+        s.serialize_field("data", &ee.data)?;
+        s.end()
     }
 }

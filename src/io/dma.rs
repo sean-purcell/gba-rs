@@ -1,4 +1,6 @@
 use bit_util::{bit, extract};
+use serde::{Serialize, Serializer};
+use serde::ser::SerializeStruct;
 
 use mmu::Mmu;
 use mmu::gba::Gba as GbaMmu;
@@ -16,7 +18,7 @@ pub struct Dma<'a> {
     active_len: u32,
 }
 
-#[derive(Copy, Clone, Default)]
+#[derive(Copy, Clone, Default, Serialize, Deserialize)]
 struct DmaCh {
     sad: u32,
     dad: u32,
@@ -182,5 +184,14 @@ impl DmaCh {
         let mval = (val as u32) & (max - 1);
 
         self.len = if mval == 0 { max } else { mval };
+    }
+}
+
+impl<'a> Serialize for Dma<'a> {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        let mut s = serializer.serialize_struct("gba_rs::io::dma::Dma", 2)?;
+        s.serialize_field("chs", &self.chs)?;
+        s.serialize_field("active_len", &self.active_len)?;
+        s.end()
     }
 }

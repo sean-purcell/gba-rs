@@ -1,4 +1,7 @@
 use bit_util::{bit, extract};
+use serde::{Serialize, Serializer};
+use serde::ser::SerializeStruct;
+
 use mmu::Mmu;
 use shared::Shared;
 
@@ -11,6 +14,15 @@ pub struct Timers<'a> {
     timers: [u16; TIMERS],
     cycles: u64,
     io: Shared<IoReg<'a>>,
+}
+
+impl<'a> Serialize for Timers<'a> {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        let mut s = serializer.serialize_struct("gba_rs::io::timer::Timers", 2)?;
+        s.serialize_field("timers", &self.timers)?;
+        s.serialize_field("cycles", &self.cycles)?;
+        s.end()
+    }
 }
 
 impl<'a> Timers<'a> {

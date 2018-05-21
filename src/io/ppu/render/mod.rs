@@ -7,6 +7,8 @@
 use std::ops::{Deref, DerefMut};
 
 use byteorder::{ByteOrder, LittleEndian};
+use serde::{Serialize, Serializer, Deserialize};
+use serde::ser::SerializeStruct;
 
 use bit_util::{bit, extract, sign_extend};
 
@@ -36,32 +38,32 @@ impl<'a> Ppu<'a> {
     }
 }
 
-struct LineBuf {
-    a: [u32; COLS as usize],
-}
+struct LineBuf([u32; COLS as usize]);
 
 impl Default for LineBuf {
     fn default() -> Self {
-        LineBuf { a: [0; COLS as usize] }
+        LineBuf([0; COLS as usize])
     }
 }
 
 impl Deref for LineBuf {
     type Target = [u32];
     fn deref(&self) -> &[u32] {
-        &self.a
+        &self.0
     }
 }
 
 impl DerefMut for LineBuf {
     fn deref_mut(&mut self) -> &mut [u32] {
-        &mut self.a
+        &mut self.0
     }
 }
 
 #[derive(Default)]
 pub(super) struct RenderState {
     // Stealing a trick from VBA: upper bits are priority
+    // TODO: linebufs are just a memory allocation thing,
+    // check if they're really necessary
     line0: LineBuf,
     line1: LineBuf,
     line2: LineBuf,
@@ -75,7 +77,7 @@ pub(super) struct RenderState {
     pub(super) bg3ref: BgRef,
 }
 
-#[derive(Default, Copy, Clone, Debug)]
+#[derive(Default, Copy, Clone, Debug, Serialize, Deserialize)]
 pub struct BgRef {
     xref: u32,
     yref: u32,
@@ -143,6 +145,17 @@ fn in_win_hori(winh: u16, col: u32) -> bool {
         col >= x1 && col < x2
     } else {
         col >= x1 || col < x2
+    }
+}
+
+impl Serialize for RenderState {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        // Serializing LineBuf's is pointless, they're just there to avoid
+        // allocating memory on the stack repeatedly
+        let mut s = serializer.serialize_struct("gba_rs::io::ppu::render::Ppu", 2)?;
+        s.serialize_field("bg2ref", &self.bg2ref)?;
+        s.serialize_field("bg3ref", &self.bg3ref)?;
+        s.end()
     }
 }
 
