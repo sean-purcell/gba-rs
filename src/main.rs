@@ -7,7 +7,6 @@ extern crate memmap;
 extern crate sdl2;
 extern crate serde;
 #[macro_use] extern crate serde_derive;
-extern crate serde_json;
 extern crate zstd;
 
 extern crate flame;
@@ -115,15 +114,6 @@ fn run_emu() -> Result<()> {
              .default_value("save")
              .help("The save file prefix to save to"),
         )
-        .arg(Arg::with_name("save-type")
-             .short("t")
-             .long("type")
-             .required(false)
-             .takes_value(true)
-             .possible_values(&["bin", "json"])
-             .default_value("bin")
-             .help("The type of save file to create")
-        )
         .get_matches();
 
     for _ in 0..app_m.occurrences_of("quiet") {
@@ -162,7 +152,6 @@ fn run_gba(app_m: &ArgMatches) -> Result<()> {
         step_frames: app_m.is_present("step-frames"),
         direct_boot: app_m.is_present("direct"),
         save_file: app_m.value_of_os("save-file").unwrap().to_os_string(),
-        json_save: app_m.value_of("save-type").unwrap() == "json",
         ..Default::default()
     };
 

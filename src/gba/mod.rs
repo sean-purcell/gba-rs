@@ -40,7 +40,6 @@ pub struct Options {
     pub step_frames: bool,
     pub direct_boot: bool,
     pub save_file: OsString,
-    pub json_save: bool,
 }
 
 impl Default for Options {
@@ -51,7 +50,6 @@ impl Default for Options {
             step_frames: false,
             direct_boot: false,
             save_file: OsStr::new("gba").to_os_string(),
-            json_save: false,
         }
     }
 }
