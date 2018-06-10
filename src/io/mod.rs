@@ -3,9 +3,6 @@ pub mod key;
 mod dma;
 mod timer;
 
-use serde::{Deserialize, Serialize, Serializer};
-use serde::ser::SerializeStruct;
-
 use self::ppu::Ppu;
 use self::dma::Dma;
 use self::timer::Timers;
@@ -27,11 +24,15 @@ const IE: u32 = 0x200;
 const IF: u32 = 0x202;
 const IME: u32 = 0x208;
 
+#[derive(Serialize, Deserialize)]
 pub struct IoReg<'a> {
     reg: Ram,
 
+    #[serde(skip)]
     cpu: Shared<Cpu<GbaMmu<'a>>>,
+    #[serde(skip)]
     mmu: Shared<GbaMmu<'a>>,
+    #[serde(skip)]
     ppu: Shared<Ppu<'a>>,
 
     timers: Timers<'a>,
@@ -193,16 +194,6 @@ impl<'a> Mmu for IoReg<'a> {
         // (specifically on timers?)
         self.set(addr, val as u16);
         self.set(addr + 2, (val >> 16) as u16);
-    }
-}
-
-impl<'a> Serialize for IoReg<'a> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut s = serializer.serialize_struct("gba_rs::io::IoReg", 3)?;
-        s.serialize_field("reg", &self.reg)?;
-        s.serialize_field("timers", &self.timers)?;
-        s.serialize_field("dma", &self.dma)?;
-        s.end()
     }
 }
 

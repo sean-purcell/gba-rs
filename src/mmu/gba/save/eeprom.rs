@@ -213,7 +213,7 @@ impl<'de> Deserialize<'de> for EepromMem {
                 formatter.write_str("EepromMem")
             }
 
-            fn visit_seq<A: SeqAccess<'de>>(self, seq: A) -> Result<EepromMem, A::Error> {
+            fn visit_seq<A: SeqAccess<'de>>(self, mut seq: A) -> Result<EepromMem, A::Error> {
                 let mut mem: EepromMem = Default::default();
                 for i in 0..MEM_SIZE {
                     mem[i] = seq.next_element()?

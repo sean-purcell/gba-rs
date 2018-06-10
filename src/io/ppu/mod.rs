@@ -1,7 +1,6 @@
 use std::default::Default;
 
 use sdl2::render::Texture;
-use serde::{Serialize, Serializer, Deserialize};
 
 use mmu::gba::Gba as GbaMmu;
 use shared::Shared;
@@ -19,18 +18,30 @@ const ROW_BYTES: usize = PIX_BYTES * (COLS as usize);
 const FRAME_BYTES: usize = ROW_BYTES * (ROWS as usize);
 
 /// Handle scanline drawing here
+// We skip almost everything because at the moment, save states can only be taken at frame
+// boundaries
+#[derive(Serialize, Deserialize)]
 pub struct Ppu<'a> {
+    #[serde(skip)]
     texture: Shared<Texture<'a>>,
 
+    #[serde(skip, default = "empty_frame")]
     pixels: [u8; FRAME_BYTES],
 
+    #[serde(skip)]
     io: Shared<IoReg<'a>>,
+    #[serde(skip)]
     mmu: Shared<GbaMmu<'a>>,
     col: u32,
     row: u32,
     delay: u8,
 
+    #[serde(skip)]
     state: render::RenderState,
+}
+
+fn empty_frame() -> [u8; FRAME_BYTES] {
+    [0u8; FRAME_BYTES]
 }
 
 impl<'a> Ppu<'a> {
@@ -166,18 +177,5 @@ impl<'a> Ppu<'a> {
         let yh = self.io.get_priv(0x3e);
 
         self.state.bg3ref = render::BgRef::new(xl, xh, yl, yh);
-    }
-}
-
-impl<'a> Serialize for Ppu<'a> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        // Don't serialize the pixels, most of the time save states will be at
-        // a frame boundary anyway
-        let mut s = serializer.serialize_struct("gba_rs::io::ppu::render::Ppu", 4)?;
-        s.serialize_field("col", &self.col)?;
-        s.serialize_field("row", &self.row)?;
-        s.serialize_field("delay", &self.delay)?;
-        s.serialize_field("state", &self.state)?;
-        s.end()
     }
 }

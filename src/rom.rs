@@ -3,7 +3,7 @@ use std::fs::File;
 use std::path::Path;
 use std::ops::Deref;
 
-use memmap::Mmap;
+use memmap::{Mmap, MmapMut};
 
 use mmu::Mmu;
 
@@ -25,6 +25,14 @@ impl GameRom {
             }
             Err(err) => Err(GBAError::RomLoadError(err)),
         }
+    }
+}
+
+impl Default for GameRom {
+    fn default() -> Self {
+        return GameRom { rom:
+            MmapMut::map_anon(0).unwrap()
+                .make_read_only().unwrap() }
     }
 }
 

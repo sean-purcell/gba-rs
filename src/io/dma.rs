@@ -1,6 +1,4 @@
 use bit_util::{bit, extract};
-use serde::{Serialize, Serializer};
-use serde::ser::SerializeStruct;
 
 use mmu::Mmu;
 use mmu::gba::Gba as GbaMmu;
@@ -10,9 +8,10 @@ use super::IoReg;
 
 const CHANNELS: usize = 4;
 
-#[derive(Copy, Clone, Default)]
+#[derive(Copy, Clone, Default, Serialize, Deserialize)]
 pub struct Dma<'a> {
     chs: [DmaCh; CHANNELS],
+    #[serde(skip)]
     io: Shared<IoReg<'a>>,
 
     active_len: u32,
@@ -184,14 +183,5 @@ impl DmaCh {
         let mval = (val as u32) & (max - 1);
 
         self.len = if mval == 0 { max } else { mval };
-    }
-}
-
-impl<'a> Serialize for Dma<'a> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut s = serializer.serialize_struct("gba_rs::io::dma::Dma", 2)?;
-        s.serialize_field("chs", &self.chs)?;
-        s.serialize_field("active_len", &self.active_len)?;
-        s.end()
     }
 }
