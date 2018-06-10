@@ -1,9 +1,10 @@
 use std::cell::RefCell;
+use std::fmt;
 use std::ops::{Deref, DerefMut};
 
-use serde::{Serialize, Serializer};
-use serde::ser::SerializeStruct;
+use serde::{Serialize, Serializer, Deserialize, Deserializer};
 use serde::ser::SerializeTuple;
+use serde::de::{Visitor, Error, SeqAccess};
 
 use shared::Shared;
 
@@ -13,10 +14,15 @@ use mmu::Mmu;
 
 const MEM_SIZE: usize = 1024;
 
+#[derive(Serialize, Deserialize)]
 pub struct Eeprom<'a> {
     ee: RefCell<EepromInner<'a>>,
 }
 
+// Note: Everything other than mem shouldn't actually need serializing
+// DMA currently is instantaneous and so it can't span a frame barrier
+// (where the save state takes place)
+#[derive(Serialize, Deserialize)]
 struct EepromInner<'a> {
     mem: EepromMem,
     state: State,
@@ -25,6 +31,7 @@ struct EepromInner<'a> {
     bits: u8,
     data: u64,
 
+    #[serde(skip)]
     io: Shared<IoReg<'a>>,
 }
 
@@ -196,6 +203,30 @@ impl Serialize for EepromMem {
     }
 }
 
+impl<'de> Deserialize<'de> for EepromMem {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        struct EepromMemVisitor;
+        impl<'de> Visitor<'de> for EepromMemVisitor {
+            type Value = EepromMem;
+
+            fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+                formatter.write_str("EepromMem")
+            }
+
+            fn visit_seq<A: SeqAccess<'de>>(self, seq: A) -> Result<EepromMem, A::Error> {
+                let mut mem: EepromMem = Default::default();
+                for i in 0..MEM_SIZE {
+                    mem[i] = seq.next_element()?
+                        .ok_or_else(|| Error::invalid_length(i, &self))?;
+                }
+                Ok(mem)
+            }
+        }
+
+        deserializer.deserialize_tuple(MEM_SIZE, EepromMemVisitor)
+    }
+}
+
 impl<'a> Mmu for Eeprom<'a> {
     #[inline]
     fn load8(&self, _addr: u32) -> u8 {
@@ -225,23 +256,5 @@ impl<'a> Mmu for Eeprom<'a> {
     #[inline]
     fn set32(&mut self, _addr: u32, val: u32) {
         self.ee.borrow_mut().write(val as u16)
-    }
-}
-
-impl<'a> Serialize for Eeprom<'a> {
-    // Note: Everything other than mem shouldn't actually need serializing
-    // DMA currently is instantaneous and so it can't span a frame barrier
-    // (where the save state takes place)
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut s = serializer.serialize_struct("gba_rs::gba::save::eeprom::Eeprom", 6)?;
-        let ee = self.ee.borrow();
-
-        s.serialize_field("mem", &ee.mem)?;
-        s.serialize_field("state", &ee.state)?;
-        s.serialize_field("write", &ee.write)?;
-        s.serialize_field("addr", &ee.addr)?;
-        s.serialize_field("bits", &ee.bits)?;
-        s.serialize_field("data", &ee.data)?;
-        s.end()
     }
 }

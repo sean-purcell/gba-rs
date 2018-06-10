@@ -1,8 +1,5 @@
 use std::vec::Vec;
 
-use serde::{Serialize, Serializer};
-use serde::ser::SerializeStruct;
-
 use super::Mmu;
 
 /// Implements a basic memory model with no memory mapping

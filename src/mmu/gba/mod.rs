@@ -1,6 +1,3 @@
-use serde::{Serialize, Serializer};
-use serde::ser::SerializeStruct;
-
 // FIXME: implement open bus
 // FIXME: move unaligned access logic here from CPU
 use shared::Shared;
@@ -103,16 +100,20 @@ impl MemoryRange {
 }
 
 /// Implements the memory mapping for a GBA system
+#[derive(Serialize, Deserialize)]
 pub struct Gba<'a> {
+    #[serde(skip)]
     pub bios: GameRom,
     pub bram: Ram,
     pub cram: Ram,
     pub pram: Ram,
     pub vram: Ram,
     pub oam: Ram,
+    #[serde(skip)]
     pub rom: GameRom,
     pub gram: Ram,
 
+    #[serde(skip)]
     pub io: Shared<IoReg<'a>>,
     pub ee: Eeprom<'a>,
 }
@@ -244,18 +245,4 @@ impl<'a> Mmu for Gba<'a> {
 
 fn warning(addr: u32) {
     warn!("Access to unmapped memory: {:#010x}", addr);
-}
-
-impl<'a> Serialize for Gba<'a> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut s = serializer.serialize_struct("gba_rs::mmu::gba::Gba", 7)?;
-        s.serialize_field("bram", &self.bram)?;
-        s.serialize_field("cram", &self.cram)?;
-        s.serialize_field("pram", &self.pram)?;
-        s.serialize_field("vram", &self.vram)?;
-        s.serialize_field("oam", &self.oam)?;
-        s.serialize_field("gram", &self.gram)?;
-        s.serialize_field("ee", &self.ee)?;
-        s.end()
-    }
 }
