@@ -116,16 +116,25 @@ impl<'a> IoReg<'a> {
     fn get(&self, addr: u32) -> u16 {
         match addr {
             0x100 | 0x104 | 0x108 | 0x10c => self.timers.get((addr - 0x100) / 4),
-            _ => self.reg.load16(addr),
+            _ => if ((addr as usize) < self.reg.len()) {
+                self.reg.load16(addr)
+            } else {
+                0
+            },
         }
     }
 
     #[inline]
     fn set(&mut self, addr: u32, val: u16) {
         let ro = ro_mask(addr);
-        let old = self.get_priv(addr);
+        let old = if ((addr as usize) < self.reg.len()) {
+            self.get_priv(addr)
+        } else { 0 };
         let nval = (ro & old) | (!ro & val);
-        self.reg.set16(addr, nval);
+        if ((addr as usize) < self.reg.len()) {
+            // GBA writing out of range doesn't do anything
+            self.reg.set16(addr, nval);
+        }
 
         // Potential callback
         self.updated(addr, old, nval);
@@ -166,7 +175,9 @@ impl<'a> Mmu for IoReg<'a> {
 
     #[inline]
     fn set8(&mut self, addr: u32, val: u8) {
-        let pv = self.get_priv(addr & !1);
+        let pv = if ((addr as usize) < self.reg.len()) {
+            self.get_priv(addr & !1)
+        } else { 0 };
         let shift = (addr & 1) * 8;
         let mask = 0xff00 >> shift;
         let nv = (pv & mask) | ((val as u16) << shift);

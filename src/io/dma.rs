@@ -152,6 +152,7 @@ fn do_copy<'a>(regs: &mut DmaCh, mmu: &mut GbaMmu<'a>, ctrl: u16) {
         _ => unreachable!(),
     };
 
+    regs.dad &= !(word - 1);
     regs.sad &= !(word - 1);
     // FIXME: DMA copying from BIOS memory should write 0's when not executing
     // BIOS code

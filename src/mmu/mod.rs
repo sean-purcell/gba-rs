@@ -82,6 +82,9 @@ impl<'a> Mmu for &'a [u8] {
     fn load16(&self, addr: u32) -> u16 {
         debug_assert!(addr % 2 == 0);
         let idx = addr as usize;
+        if (idx >= self.len()) {
+            println!("Hit badness");
+        }
         LittleEndian::read_u16(&self[idx..idx + 2])
     }
 

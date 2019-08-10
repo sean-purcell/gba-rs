@@ -18,6 +18,10 @@ impl Ram {
         ram.mem[..data.len()].clone_from_slice(data);
         ram
     }
+
+    pub fn len(&self) -> usize {
+        self.mem.len()
+    }
 }
 
 impl Mmu for Ram {
