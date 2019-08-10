@@ -97,7 +97,7 @@ fn run_emu() -> Result<()> {
                 })
                 .help("A list of addresses to warn when the CPU hits"),
         )
-        .arg(Arg::with_name("step-frames").short("p").long("step").help(
+        .arg(Arg::with_name("step-frames").short("S").long("step").help(
             "Step through the frames step by step with the F key",
         ))
         .arg(Arg::with_name("quiet").short("q").long("quiet").multiple(true).help(
