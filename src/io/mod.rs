@@ -8,7 +8,7 @@ use self::dma::Dma;
 use self::timer::Timers;
 
 use cpu::{Cpu, exception};
-use mmu::Mmu;
+use mmu::{Mmu, MemoryRead};
 use mmu::gba::Gba as GbaMmu;
 use mmu::ram::Ram;
 use shared::Shared;
@@ -104,7 +104,7 @@ impl<'a> IoReg<'a> {
 
     #[inline]
     fn get_priv(&self, addr: u32) -> u16 {
-        self.reg.load16(addr)
+        self.reg.load16(addr).get()
     }
 
     #[inline]
@@ -117,9 +117,9 @@ impl<'a> IoReg<'a> {
         match addr {
             0x100 | 0x104 | 0x108 | 0x10c => self.timers.get((addr - 0x100) / 4),
             _ => if ((addr as usize) < self.reg.len()) {
-                self.reg.load16(addr)
+                self.reg.load16(addr).get()
             } else {
-                0
+                0 // FIXME open bus
             },
         }
     }
@@ -167,13 +167,13 @@ impl<'a> IoReg<'a> {
 
 // TODO: implement read/write masks
 impl<'a> Mmu for IoReg<'a> {
-    #[inline]
-    fn load8(&self, addr: u32) -> u8 {
+    fn load8(&self, addr: u32) -> MemoryRead<u8> {
+        use self::MemoryRead::*;
+
         let val = self.get(addr & !1);
-        (val >> ((addr & 1) * 8)) as u8
+        Value((val >> ((addr & 1) * 8)) as u8)
     }
 
-    #[inline]
     fn set8(&mut self, addr: u32, val: u8) {
         let pv = if ((addr as usize) < self.reg.len()) {
             self.get_priv(addr & !1)
@@ -184,22 +184,22 @@ impl<'a> Mmu for IoReg<'a> {
         self.set(addr & !1, nv);
     }
 
-    #[inline]
-    fn load16(&self, addr: u32) -> u16 {
-        self.get(addr)
+    fn load16(&self, addr: u32) -> MemoryRead<u16> {
+        use self::MemoryRead::*;
+
+        Value(self.get(addr))
     }
 
-    #[inline]
     fn set16(&mut self, addr: u32, val: u16) {
         self.set(addr, val);
     }
 
-    #[inline]
-    fn load32(&self, addr: u32) -> u32 {
-        self.get(addr) as u32 | ((self.get(addr + 2) as u32) << 16)
+    fn load32(&self, addr: u32) -> MemoryRead<u32> {
+        use self::MemoryRead::*;
+
+        Value(self.get(addr) as u32 | ((self.get(addr + 2) as u32) << 16))
     }
 
-    #[inline]
     fn set32(&mut self, addr: u32, val: u32) {
         // FIXME: there may be issues here with simultaneous assignment rules
         // (specifically on timers?)

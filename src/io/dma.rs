@@ -1,6 +1,6 @@
 use bit_util::{bit, extract};
 
-use mmu::Mmu;
+use mmu::{Mmu, MemoryUnit};
 use mmu::gba::Gba as GbaMmu;
 use shared::Shared;
 
@@ -104,10 +104,10 @@ impl<'a> Dma<'a> {
         let base = 0xB0 + 12 * ch as u32;
         self.chs[ch].set_count(self.io.get_priv(base + 8), ch);
         if !repeat || extract(ctrl as u32, 5, 2) == 3 {
-            self.chs[ch].set_addr(Register::Dest, ch, self.io.reg.load32(base + 4));
+            self.chs[ch].set_addr(Register::Dest, ch, self.io.reg.load32(base + 4).get());
         }
         if !repeat {
-            self.chs[ch].set_addr(Register::Source, ch, self.io.reg.load32(base));
+            self.chs[ch].set_addr(Register::Source, ch, self.io.reg.load32(base).get());
         }
     }
 

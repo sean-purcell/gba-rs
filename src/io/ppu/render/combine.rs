@@ -244,7 +244,7 @@ impl<'a> Ppu<'a> {
         let bldalpha = self.io.get_priv(0x52);
         let bldy = self.io.get_priv(0x54);
 
-        let backdrop = (self.mmu.pram.load16(0) as u32) | (0xe << 28);
+        let backdrop = (self.mmu.pram.load16(0).get() as u32) | (0xe << 28);
 
         for x in 0..COLS {
             let ux = x as usize;

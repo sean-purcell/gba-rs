@@ -2,11 +2,13 @@
 // FIXME: move unaligned access logic here from CPU
 use shared::Shared;
 
+use cpu::Cpu;
+
 use rom::GameRom;
 
 use io::IoReg;
 
-use super::Mmu;
+use super::{Mmu, MemoryRead, MemoryUnit};
 use super::ram::Ram;
 
 mod save;
@@ -51,6 +53,7 @@ impl MemoryRange {
     pub fn convert_addr(&self, addr: u32) -> u32 {
         use self::MemoryRange::*;
         match *self {
+            Bios => addr,
             BoardWram => addr & 0x3ffff, // mirroring
             ChipWram => addr & 0x7fff,
             IoRegister => {
@@ -116,6 +119,9 @@ pub struct Gba<'a> {
     #[serde(skip)]
     pub io: Shared<IoReg<'a>>,
     pub ee: Eeprom<'a>,
+
+    #[serde(skip)]
+    pub cpu: Shared<Cpu<Gba<'a>>>
 }
 
 impl<'a> Gba<'a> {
@@ -133,7 +139,12 @@ impl<'a> Gba<'a> {
             ee: ee,
             gram: Ram::new(64 * 1024),
             io: io,
+            cpu: Default::default(),
         }
+    }
+
+    pub fn init(&mut self, cpu: Shared<Cpu<Gba<'a>>>) {
+        self.cpu = cpu;
     }
 
     pub fn get_range(&self, addr: u32) -> Option<(u32, &Mmu)> {
@@ -173,23 +184,32 @@ impl<'a> Gba<'a> {
             _ => None,
         }
     }
+
+    fn get_open_val() -> u16 {
+        // Open value reads the most recent opcode
+        0
+    }
 }
 
-impl<'a> Mmu for Gba<'a> {
-    #[inline]
+impl<'a> MemoryUnit for Gba<'a> {
     fn load8(&self, addr: u32) -> u8 {
+        use self::MemoryRead::*;
+
         let val = match self.get_range(addr) {
             Some((naddr, mmu)) => mmu.load8(naddr),
             None => {
                 warning(addr);
-                0
+                Open
             }
         };
-        debug!("load08\t@ {:#010x}: {:#04x}", addr, val);
-        val
+        let res = match val {
+            Value(v) => v,
+            Open => 0, // FIXME
+        };
+        debug!("load08\t@ {:#010x}: {:#04x}", addr, res);
+        res
     }
 
-    #[inline]
     fn set8(&mut self, addr: u32, val: u8) {
         debug!("set08\t@ {:#010x}: {:#04x}", addr, val);
         match self.get_range_mut(addr) {
@@ -198,20 +218,24 @@ impl<'a> Mmu for Gba<'a> {
         }
     }
 
-    #[inline]
     fn load16(&self, addr: u32) -> u16 {
+        use self::MemoryRead::*;
+
         let val = match self.get_range(addr) {
             Some((naddr, mmu)) => mmu.load16(naddr),
             None => {
                 warning(addr);
-                0
+                Open
             }
         };
-        debug!("load16\t@ {:#010x}: {:#06x}", addr, val);
-        val
+        let res = match val {
+            Value(v) => v,
+            Open => 0, // FIXME
+        };
+        debug!("load16\t@ {:#010x}: {:#06x}", addr, res);
+        res
     }
 
-    #[inline]
     fn set16(&mut self, addr: u32, val: u16) {
         debug!("set16\t@ {:#010x}: {:#06x}", addr, val);
         match self.get_range_mut(addr) {
@@ -220,20 +244,24 @@ impl<'a> Mmu for Gba<'a> {
         }
     }
 
-    #[inline]
     fn load32(&self, addr: u32) -> u32 {
+        use self::MemoryRead::*;
+
         let val = match self.get_range(addr) {
             Some((naddr, mmu)) => mmu.load32(naddr),
             None => {
                 warning(addr);
-                0
+                Open
             }
         };
-        debug!("load32\t@ {:#010x}: {:#010x}", addr, val);
-        val
+        let res = match val {
+            Value(v) => v,
+            Open => 0, // FIXME
+        };
+        debug!("load32\t@ {:#010x}: {:#010x}", addr, res);
+        res
     }
 
-    #[inline]
     fn set32(&mut self, addr: u32, val: u32) {
         debug!("set32\t@ {:#010x}: {:#010x}", addr, val);
         match self.get_range_mut(addr) {

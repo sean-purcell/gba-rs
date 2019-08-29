@@ -25,7 +25,7 @@ impl<'a> Timers<'a> {
     pub fn cycle(&mut self) {
         let mut res = false;
         for i in 0..TIMERS {
-            let ctrl = self.io.reg.load32(0x100 + 4 * i as u32);
+            let ctrl = self.io.reg.load32(0x100 + 4 * i as u32).get();
             let ret = self.timers[i].cycle(ctrl, self.cycles as u16, res);
             res = ret.0;
             if ret.1 {

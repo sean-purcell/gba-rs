@@ -10,7 +10,7 @@ use shared::Shared;
 
 use io::IoReg;
 
-use mmu::Mmu;
+use mmu::{Mmu, MemoryRead};
 
 const MEM_SIZE: usize = 1024;
 
@@ -228,32 +228,26 @@ impl<'de> Deserialize<'de> for EepromMem {
 }
 
 impl<'a> Mmu for Eeprom<'a> {
-    #[inline]
-    fn load8(&self, _addr: u32) -> u8 {
-        self.ee.borrow_mut().read() as u8
+    fn load8(&self, _addr: u32) -> MemoryRead<u8> {
+        MemoryRead::Value(self.ee.borrow_mut().read() as u8)
     }
 
-    #[inline]
     fn set8(&mut self, _addr: u32, val: u8) {
         self.ee.borrow_mut().write(val as u16)
     }
 
-    #[inline]
-    fn load16(&self, _addr: u32) -> u16 {
-        self.ee.borrow_mut().read()
+    fn load16(&self, _addr: u32) -> MemoryRead<u16> {
+        MemoryRead::Value(self.ee.borrow_mut().read())
     }
 
-    #[inline]
     fn set16(&mut self, _addr: u32, val: u16) {
         self.ee.borrow_mut().write(val)
     }
 
-    #[inline]
-    fn load32(&self, _addr: u32) -> u32 {
-        self.ee.borrow_mut().read() as u32
+    fn load32(&self, _addr: u32) -> MemoryRead<u32> {
+        MemoryRead::Value(self.ee.borrow_mut().read() as u32)
     }
 
-    #[inline]
     fn set32(&mut self, _addr: u32, val: u32) {
         self.ee.borrow_mut().write(val as u16)
     }

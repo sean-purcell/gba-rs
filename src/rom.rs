@@ -5,7 +5,7 @@ use std::ops::Deref;
 
 use memmap::{Mmap, MmapMut};
 
-use mmu::Mmu;
+use mmu::{Mmu, MemoryRead, bytes};
 
 use GBAError;
 use Result;
@@ -57,44 +57,38 @@ where
 }
 
 impl Mmu for GameRom {
-    #[inline]
-    fn load8(&self, addr: u32) -> u8 {
-        if addr < (self.rom.len() as u32) {
-            self.deref().load8(addr)
+    fn load8(&self, addr: u32) -> MemoryRead<u8> {
+        if (addr as usize) < self.rom.len() {
+            bytes::load8(self.deref(), addr)
         } else {
-            0
+            MemoryRead::Value(0)
         }
     }
 
-    #[inline]
     fn set8(&mut self, addr: u32, val: u8) {
         warning(addr, val);
     }
 
-    #[inline]
-    fn load16(&self, addr: u32) -> u16 {
-        if addr < (self.rom.len() as u32) {
-            self.deref().load16(addr)
+    fn load16(&self, addr: u32) -> MemoryRead<u16> {
+        if (addr as usize) < self.rom.len() {
+            bytes::load16(self.deref(), addr)
         } else {
-            0
+            MemoryRead::Value(0)
         }
     }
 
-    #[inline]
     fn set16(&mut self, addr: u32, val: u16) {
         warning(addr, val);
     }
 
-    #[inline]
-    fn load32(&self, addr: u32) -> u32 {
-        if addr < (self.rom.len() as u32) {
-            self.deref().load32(addr)
+    fn load32(&self, addr: u32) -> MemoryRead<u32> {
+        if (addr as usize) < self.rom.len() {
+            bytes::load32(self.deref(), addr)
         } else {
-            0
+            MemoryRead::Value(0)
         }
     }
 
-    #[inline]
     fn set32(&mut self, addr: u32, val: u32) {
         warning(addr, val);
     }

@@ -44,14 +44,14 @@ pub(super) fn render_obj_line(
 
     // 128 objects
     for o in 0..128 {
-        let a0 = mmu.oam.load16(o * 8 + 0) as u32;
+        let a0 = mmu.oam.load16(o * 8 + 0).get() as u32;
         if extract(a0, 8, 2) == 2 || extract(a0, 10, 2) == 3 {
             // disabled
             continue;
         }
 
-        let a1 = mmu.oam.load16(o * 8 + 2) as u32;
-        let a2 = mmu.oam.load16(o * 8 + 4) as u32;
+        let a1 = mmu.oam.load16(o * 8 + 2).get() as u32;
+        let a2 = mmu.oam.load16(o * 8 + 4).get() as u32;
 
         let (xsize, ysize): (u32, u32) = match (extract(a0, 14, 2), extract(a1, 14, 2)) {
             (0, x) if x < 4 => (8 * (1 << x), 8 * (1 << x)),
@@ -88,10 +88,10 @@ pub(super) fn render_obj_line(
             // p = Q * (q - q0) + p0
             let param_idx = extract(a1, 9, 5);
             let rparams = RotScaleParams::new(
-                mmu.oam.load16(0x06 + 0x20 * param_idx),
-                mmu.oam.load16(0x0E + 0x20 * param_idx),
-                mmu.oam.load16(0x16 + 0x20 * param_idx),
-                mmu.oam.load16(0x1E + 0x20 * param_idx),
+                mmu.oam.load16(0x06 + 0x20 * param_idx).get(),
+                mmu.oam.load16(0x0E + 0x20 * param_idx).get(),
+                mmu.oam.load16(0x16 + 0x20 * param_idx).get(),
+                mmu.oam.load16(0x1E + 0x20 * param_idx).get(),
             );
 
             // p0_z = (zsize << 8) / 2
@@ -162,10 +162,10 @@ pub(super) fn render_obj_line(
 
             let tile_addr = 0x10000 + t * 32;
             let palette_colour = if palette_mode == 0 {
-                let v = mmu.vram.load8(tile_addr + idx / 2);
+                let v = mmu.vram.load8(tile_addr + idx / 2).get();
                 (v >> ((idx & 1) * 4)) & 0xf
             } else {
-                mmu.vram.load8(tile_addr + idx)
+                mmu.vram.load8(tile_addr + idx).get()
             };
 
             if palette_colour == 0 {
@@ -180,7 +180,7 @@ pub(super) fn render_obj_line(
             } else {
                 let colour = mmu.pram.load16(
                     0x200 + palette * 32 + (palette_colour as u32) * 2,
-                );
+                ).get();
                 line[sx as usize] = (colour as u32) | prio;
             }
         }

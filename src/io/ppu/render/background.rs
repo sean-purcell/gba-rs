@@ -124,29 +124,29 @@ pub(super) fn render_rotscale_line(
                 RotScaleCtrl::TileMap(_) => {
                     let tile_idx = (ix / 8) + (iy / 8) * (xsize / 8);
                     let addr = base + tile_idx;
-                    let tile = mmu.vram.load8(addr) as u32;
+                    let tile = mmu.vram.load8(addr).get() as u32;
                     // 256 colours / 1 palette
                     // one tile is 64 bytes
                     let px_idx = (ix % 8) + (iy % 8) * 8;
-                    let colour = mmu.vram.load8(tile_base + tile * 64 + px_idx);
+                    let colour = mmu.vram.load8(tile_base + tile * 64 + px_idx).get();
                     if colour == 0 {
                         TRANSPARENT
                     } else {
-                        mmu.pram.load16(colour as u32 * 2) as u32 | prio
+                        mmu.pram.load16(colour as u32 * 2).get() as u32 | prio
                     }
                 }
                 RotScaleCtrl::Bitmap(_) => {
                     // mode 3/5 are direct colours, 4 is palette
                     let idx = iy * xsize + ix;
                     if is_palette {
-                        let colour = mmu.vram.load8(base + idx);
+                        let colour = mmu.vram.load8(base + idx).get();
                         if colour == 0 {
                             TRANSPARENT
                         } else {
-                            mmu.pram.load16(colour as u32 * 2) as u32 | prio
+                            mmu.pram.load16(colour as u32 * 2).get() as u32 | prio
                         }
                     } else {
-                        mmu.vram.load16(base + idx * 2) as u32 | prio
+                        mmu.vram.load16(base + idx * 2).get() as u32 | prio
                     }
                 }
             }
@@ -206,7 +206,7 @@ impl TextCtrl for u16 {
 }
 
 pub(super) fn render_textmode_line(line: &mut LineBuf, row: u32, mmu: &GbaMmu, bg: u8) {
-    let ctrl = mmu.io.load16(8 + (bg as u32) * 2);
+    let ctrl = mmu.io.load16(8 + (bg as u32) * 2).get();
     let prio = (ctrl.priority() << 28) | (1 << 27) | ((bg as u32) << 25);
 
     let base = ctrl.base_addr();
@@ -214,8 +214,8 @@ pub(super) fn render_textmode_line(line: &mut LineBuf, row: u32, mmu: &GbaMmu, b
 
     let (xsize, ysize) = ctrl.size();
 
-    let xoff = extract(mmu.io.load16(0x10 + (bg as u32) * 4) as u32, 0, 9);
-    let yoff = extract(mmu.io.load16(0x12 + (bg as u32) * 4) as u32, 0, 9);
+    let xoff = extract(mmu.io.load16(0x10 + (bg as u32) * 4).get() as u32, 0, 9);
+    let yoff = extract(mmu.io.load16(0x12 + (bg as u32) * 4).get() as u32, 0, 9);
 
     let c256 = ctrl.is256c();
 
@@ -235,7 +235,7 @@ pub(super) fn render_textmode_line(line: &mut LineBuf, row: u32, mmu: &GbaMmu, b
         let tile_idx = (ix / 8) + (iy / 8) * 32;
         let addr = base + map * (2 * 1024) + tile_idx * 2;
 
-        let tile = mmu.vram.load16(addr) as u32;
+        let tile = mmu.vram.load16(addr).get() as u32;
 
         let palette = if c256 { 0 } else { extract(tile, 12, 4) };
         // FIXME: horizontal flip, vertical flip
@@ -256,14 +256,14 @@ pub(super) fn render_textmode_line(line: &mut LineBuf, row: u32, mmu: &GbaMmu, b
 
         let px_addr = tile_num * 64 + px_idx;
         let palette_colour = if c256 {
-            mmu.vram.load8(tile_base + px_addr)
+            mmu.vram.load8(tile_base + px_addr).get()
         } else {
-            (mmu.vram.load8(tile_base + px_addr / 2) >> ((px_addr & 1) * 4)) & 0xf
+            (mmu.vram.load8(tile_base + px_addr / 2).get() >> ((px_addr & 1) * 4)) & 0xf
         };
         line[x as usize] = if palette_colour == 0 {
             TRANSPARENT
         } else {
-            mmu.pram.load16(palette * 32 + (palette_colour as u32) * 2) as u32 | prio
+            mmu.pram.load16(palette * 32 + (palette_colour as u32) * 2).get() as u32 | prio
         };
     }
 }

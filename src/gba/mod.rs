@@ -25,6 +25,7 @@ use cpu::Cpu;
 use io::IoReg;
 use io::key::KeyState;
 use io::ppu::{Ppu, ROWS, COLS};
+use mmu::MemoryUnit;
 use mmu::gba::Gba as GbaMmu;
 use rom::GameRom;
 
@@ -106,8 +107,7 @@ impl<'a> Gba<'a> {
                 GbaMmu::new(rom, bios, Shared::new(&mut gba.io)),
             );
 
-            let mmu = Shared::new(&mut gba.mmu);
-            ptr::write(&mut gba.cpu, Cpu::new(mmu, &[]));
+            ptr::write(&mut gba.cpu, Cpu::new(Shared::new(&mut gba.mmu), &[]));
             if gba.opts.direct_boot {
                 gba.cpu.init_direct();
             } else {
@@ -127,7 +127,8 @@ impl<'a> Gba<'a> {
 
             let cpu = Shared::new(&mut gba.cpu);
             let ppu = Shared::new(&mut gba.ppu);
-            gba.io.init(cpu, mmu, ppu);
+            gba.mmu.init(cpu);
+            gba.io.init(cpu, Shared::new(&mut gba.mmu), ppu);
 
 
             gba
