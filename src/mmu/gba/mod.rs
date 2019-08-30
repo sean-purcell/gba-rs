@@ -185,9 +185,15 @@ impl<'a> Gba<'a> {
         }
     }
 
-    fn get_open_val() -> u16 {
+    fn get_open_val(&self) -> u32 {
         // Open value reads the most recent opcode
-        0
+        let addr = self.cpu.get_prefetch_addr()
+        if self.cpu.thumb_mode() {
+            let r = self.load16(addr) as u32;
+            r | (r << 16)
+        } else {
+            self.load32(addr)
+        }
     }
 }
 
@@ -204,7 +210,7 @@ impl<'a> MemoryUnit for Gba<'a> {
         };
         let res = match val {
             Value(v) => v,
-            Open => 0, // FIXME
+            Open => (self.get_open_val() << ((addr & 3) * 8)) as u8,
         };
         debug!("load08\t@ {:#010x}: {:#04x}", addr, res);
         res
@@ -230,7 +236,7 @@ impl<'a> MemoryUnit for Gba<'a> {
         };
         let res = match val {
             Value(v) => v,
-            Open => 0, // FIXME
+            Open => (self.get_open_val() << ((addr & 3) * 8)) as u16,
         };
         debug!("load16\t@ {:#010x}: {:#06x}", addr, res);
         res
@@ -256,7 +262,7 @@ impl<'a> MemoryUnit for Gba<'a> {
         };
         let res = match val {
             Value(v) => v,
-            Open => 0, // FIXME
+            Open => self.get_open_val(),
         };
         debug!("load32\t@ {:#010x}: {:#010x}", addr, res);
         res
