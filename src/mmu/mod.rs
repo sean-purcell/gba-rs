@@ -1,7 +1,3 @@
-use byteorder::{ByteOrder, LittleEndian};
-
-use shared::Shared;
-
 pub mod gba;
 pub mod ram;
 pub mod bytes;

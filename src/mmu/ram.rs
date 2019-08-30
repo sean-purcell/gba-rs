@@ -1,7 +1,5 @@
 use std::vec::Vec;
 
-use byteorder::{ByteOrder, LittleEndian};
-
 use super::{Mmu, MemoryRead, MemoryUnit, bytes};
 
 /// Implements a basic memory model with no memory mapping

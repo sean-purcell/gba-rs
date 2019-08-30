@@ -7,7 +7,7 @@
 use std::ops::{Deref, DerefMut};
 
 use byteorder::{ByteOrder, LittleEndian};
-use serde::{Serialize, Serializer, Deserialize};
+use serde::{Serialize, Serializer};
 use serde::ser::SerializeStruct;
 
 use bit_util::{bit, extract, sign_extend};

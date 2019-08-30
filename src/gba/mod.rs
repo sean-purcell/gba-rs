@@ -25,7 +25,6 @@ use cpu::Cpu;
 use io::IoReg;
 use io::key::KeyState;
 use io::ppu::{Ppu, ROWS, COLS};
-use mmu::MemoryUnit;
 use mmu::gba::Gba as GbaMmu;
 use rom::GameRom;
 
@@ -163,7 +162,6 @@ impl<'a> Gba<'a> {
                     break;
                 }
                 if keys.is_scancode_pressed(Scancode::B) {
-                    use log;
                     log::set_max_level(match log::max_level() {
                         log::LevelFilter::Debug => log::LevelFilter::Error,
                         _ => log::LevelFilter::Debug,

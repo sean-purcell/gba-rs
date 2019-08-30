@@ -116,7 +116,7 @@ impl<'a> IoReg<'a> {
     fn get(&self, addr: u32) -> u16 {
         match addr {
             0x100 | 0x104 | 0x108 | 0x10c => self.timers.get((addr - 0x100) / 4),
-            _ => if ((addr as usize) < self.reg.len()) {
+            _ => if (addr as usize) < self.reg.len() {
                 self.reg.load16(addr).get()
             } else {
                 0 // FIXME open bus
@@ -127,11 +127,11 @@ impl<'a> IoReg<'a> {
     #[inline]
     fn set(&mut self, addr: u32, val: u16) {
         let ro = ro_mask(addr);
-        let old = if ((addr as usize) < self.reg.len()) {
+        let old = if (addr as usize) < self.reg.len() {
             self.get_priv(addr)
         } else { 0 };
         let nval = (ro & old) | (!ro & val);
-        if ((addr as usize) < self.reg.len()) {
+        if (addr as usize) < self.reg.len() {
             // GBA writing out of range doesn't do anything
             self.reg.set16(addr, nval);
         }
@@ -175,7 +175,7 @@ impl<'a> Mmu for IoReg<'a> {
     }
 
     fn set8(&mut self, addr: u32, val: u8) {
-        let pv = if ((addr as usize) < self.reg.len()) {
+        let pv = if (addr as usize) < self.reg.len() {
             self.get_priv(addr & !1)
         } else { 0 };
         let shift = (addr & 1) * 8;
