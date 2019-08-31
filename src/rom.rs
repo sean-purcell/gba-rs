@@ -61,7 +61,7 @@ impl Mmu for GameRom {
         if (addr as usize) < self.rom.len() {
             bytes::load8(self.deref(), addr)
         } else {
-            (((addr >> 1) & 0xffff) << ((addr & 1) * 8)) as u8
+            MemoryRead::Value((((addr >> 1) & 0xffff) << ((addr & 1) * 8)) as u8)
         }
     }
 
@@ -73,7 +73,7 @@ impl Mmu for GameRom {
         if (addr as usize) < self.rom.len() {
             bytes::load16(self.deref(), addr)
         } else {
-            ((addr >> 1) & 0xffff
+            MemoryRead::Value((addr >> 1) as u16)
         }
     }
 
@@ -85,8 +85,8 @@ impl Mmu for GameRom {
         if (addr as usize) < self.rom.len() {
             bytes::load32(self.deref(), addr)
         } else {
-            let r = (((addr >> 1) & 0xffff) as u32;
-            r | ((r + 1) << 16)
+            let r = (addr >> 1) & 0xffff;
+            MemoryRead::Value(r | ((r + 1) << 16))
         }
     }
 

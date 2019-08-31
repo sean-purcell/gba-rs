@@ -11,7 +11,10 @@ use io::IoReg;
 use super::{Mmu, MemoryRead, MemoryUnit};
 use super::ram::Ram;
 
+mod bios;
 mod save;
+
+use self::bios::Bios;
 
 use self::save::Eeprom;
 
@@ -106,7 +109,7 @@ impl MemoryRange {
 #[derive(Serialize, Deserialize)]
 pub struct Gba<'a> {
     #[serde(skip)]
-    pub bios: GameRom,
+    pub bios: Bios<'a>,
     pub bram: Ram,
     pub cram: Ram,
     pub pram: Ram,
@@ -129,7 +132,7 @@ impl<'a> Gba<'a> {
         let mut ee = Eeprom::default();
         ee.init(io);
         Gba {
-            bios: bios,
+            bios: Bios::new(bios),
             bram: Ram::new(256 * 1024),
             cram: Ram::new(32 * 1024),
             pram: Ram::new(1024),
@@ -145,6 +148,7 @@ impl<'a> Gba<'a> {
 
     pub fn init(&mut self, cpu: Shared<Cpu<Gba<'a>>>) {
         self.cpu = cpu;
+        self.bios.init(cpu);
     }
 
     pub fn get_range(&self, addr: u32) -> Option<(u32, &Mmu)> {
@@ -187,7 +191,7 @@ impl<'a> Gba<'a> {
 
     fn get_open_val(&self) -> u32 {
         // Open value reads the most recent opcode
-        let addr = self.cpu.get_prefetch_addr()
+        let addr = self.cpu.get_prefetch_addr();
         if self.cpu.thumb_mode() {
             let r = self.load16(addr) as u32;
             r | (r << 16)
