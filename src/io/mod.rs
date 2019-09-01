@@ -94,7 +94,6 @@ impl<'a> IoReg<'a> {
         }
     }
 
-    #[inline]
     fn raise_interrupt(&mut self, itr: u8) {
         let pif = self.get_priv(IF);
         self.set_priv(IF, pif | (1 << (itr as u16)));
@@ -102,39 +101,46 @@ impl<'a> IoReg<'a> {
         info!("Interrupt {} raised", itr);
     }
 
-    #[inline]
     fn get_priv(&self, addr: u32) -> u16 {
         self.reg.load16(addr).get()
     }
 
-    #[inline]
     fn set_priv(&mut self, addr: u32, val: u16) {
         self.reg.set16(addr, val);
     }
 
-    #[inline]
-    fn get(&self, addr: u32) -> u16 {
-        match addr {
-            0x100 | 0x104 | 0x108 | 0x10c => self.timers.get((addr - 0x100) / 4),
-            _ => if (addr as usize) < self.reg.len() {
-                self.reg.load16(addr).get()
+    fn get(&self, addr: u32) -> MemoryRead<u16> {
+        use self::MemoryRead::*;
+
+        if !readable(addr) {
+            // If the other half of the 32 bit range is readable, t his is just
+            // 0 instead of open bus.
+            return if readable(addr ^ 2) {
+                Value(0)
             } else {
-                0 // FIXME open bus
-            },
+                Open
+            };
         }
+        let val = match addr {
+            0x100 | 0x104 | 0x108 | 0x10c => 
+                self.timers.get((addr - 0x100) / 4),
+            _ => self.reg.load16(addr).get(),
+        };
+        let wo = wo_mask(addr);
+        Value(val & !wo)
     }
 
-    #[inline]
     fn set(&mut self, addr: u32, val: u16) {
-        let ro = ro_mask(addr);
-        let old = if (addr as usize) < self.reg.len() {
-            self.get_priv(addr)
-        } else { 0 };
-        let nval = (ro & old) | (!ro & val);
-        if (addr as usize) < self.reg.len() {
-            // GBA writing out of range doesn't do anything
-            self.reg.set16(addr, nval);
+        if !writable(addr) {
+            warn!("Writing to non-writable IO register: {:#010x} -> {:#06x}",
+                  addr, val);
+            // If not writable, no point in doing anything
+            return;
         }
+        let ro = ro_mask(addr);
+        let old = self.get_priv(addr);
+        let nval = (ro & old) | (!ro & val);
+        self.reg.set16(addr, nval);
 
         // Potential callback
         self.updated(addr, old, nval);
@@ -170,8 +176,10 @@ impl<'a> Mmu for IoReg<'a> {
     fn load8(&self, addr: u32) -> MemoryRead<u8> {
         use self::MemoryRead::*;
 
-        let val = self.get(addr & !1);
-        Value((val >> ((addr & 1) * 8)) as u8)
+        match self.get(addr & !1) {
+            Value(x) => Value((x >> ((addr & 1) * 8)) as u8),
+            Open => Open,
+        }
     }
 
     fn set8(&mut self, addr: u32, val: u8) {
@@ -185,9 +193,7 @@ impl<'a> Mmu for IoReg<'a> {
     }
 
     fn load16(&self, addr: u32) -> MemoryRead<u16> {
-        use self::MemoryRead::*;
-
-        Value(self.get(addr))
+        self.get(addr)
     }
 
     fn set16(&mut self, addr: u32, val: u16) {
@@ -197,14 +203,90 @@ impl<'a> Mmu for IoReg<'a> {
     fn load32(&self, addr: u32) -> MemoryRead<u32> {
         use self::MemoryRead::*;
 
-        Value(self.get(addr) as u32 | ((self.get(addr + 2) as u32) << 16))
+        // If one register is non-open, the other one will be as well
+        match self.get(addr) {
+            Value(x) => Value((x as u32) | ((self.get(addr + 2).get() as u32) << 16)),
+            Open => Open,
+        }
     }
 
     fn set32(&mut self, addr: u32, val: u32) {
-        // FIXME: there may be issues here with simultaneous assignment rules
-        // (specifically on timers?)
+        // This setting order is correct for timers, but there may be
+        // simultaneous setting issues elsewhere, unaware of any so far.
         self.set(addr, val as u16);
         self.set(addr + 2, (val >> 16) as u16);
+    }
+}
+
+// Enum would be cleaner, but this aligns better.
+// 1 is readable, 2 is writable.
+const READWRITABLE: [u8; 0x108] = [
+    // LCD: 000
+    3, 3, 3, 1, 3, 3, 3, 3,
+    2, 2, 2, 2, 2, 2, 2, 2,
+    2, 2, 2, 2, 2, 2, 2, 2,
+    2, 2, 2, 2, 2, 2, 2, 2,
+    2, 2, 2, 2, 3, 3, 2, 0,
+    3, 3, 2, 0, 0, 0, 0, 0,
+    // SOUND: 060
+    3, 3, 3, 0, 3, 0, 3, 0,
+    3, 3, 3, 0, 3, 0, 3, 0,
+    3, 3, 3, 0, 3, 0, 0, 0,
+    3, 3, 3, 3, 3, 3, 3, 3,
+    2, 2, 2, 2, 0, 0, 0, 0,
+    // DMA: 0B0
+    2, 2, 2, 2, 2, 3, 2, 2,
+    2, 2, 2, 3, 2, 2, 2, 2,
+    2, 3, 2, 2, 2, 2, 2, 3,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    // TIMER: 100
+    3, 3, 3, 3, 3, 3, 3, 3,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    // SERIAL + KEYPAD: 120
+    3, 3, 3, 3, 3, 3, 0, 0,
+    1, 3, 3, 0, 0, 0, 0, 0,
+    3, 0, 0, 0, 0, 0, 0, 0,
+    3, 3, 3, 3, 3, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    // SYSTEM CONTROL: 200
+    3, 3, 3, 0, 3, 0, 0, 0,
+];
+
+fn writable(addr: u32) -> bool {
+    debug_assert!(addr & 1 == 0);
+
+    let idx = (addr / 2) as usize;
+    if idx < 0x108 {
+        (READWRITABLE[idx] & 2) != 0
+    } else {
+        match addr {
+            0x300 | 0x800 | 0x802 => true,
+            _ => false,
+        }
+    }
+}
+
+fn readable(addr: u32) -> bool {
+    debug_assert!(addr & 1 == 0);
+
+    let idx = (addr / 2) as usize;
+    if idx < 0x108 {
+        (READWRITABLE[idx] & 1) != 0
+    } else {
+        match addr {
+            0x300 | 0x800 | 0x802 => true,
+            _ => false,
+        }
     }
 }
 
@@ -212,10 +294,27 @@ impl<'a> Mmu for IoReg<'a> {
 /// of the field
 fn ro_mask(addr: u32) -> u16 {
     use std::u16;
-    let all = u16::MAX;
 
     match addr {
-        0x130 | 0x202 => all,
+        0x004 => 0x0047,
+        0x084 => 0x000f,
+        _ => 0,
+    }
+}
+
+fn wo_mask(addr: u32) -> u16 {
+    use std::u16;
+
+    match addr {
+        0x062 => 0x001f,
+        0x064 => 0x87ff,
+        0x068 => 0x001f,
+        0x06C => 0x87ff,
+        0x072 => 0x00ff,
+        0x074 => 0x87ff,
+        0x078 => 0x001f,
+        0x07C => 0x8000,
+        0x300 => 0xff00,
         _ => 0,
     }
 }

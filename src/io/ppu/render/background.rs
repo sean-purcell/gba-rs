@@ -206,7 +206,7 @@ impl TextCtrl for u16 {
 }
 
 pub(super) fn render_textmode_line(line: &mut LineBuf, row: u32, mmu: &GbaMmu, bg: u8) {
-    let ctrl = mmu.io.load16(8 + (bg as u32) * 2).get();
+    let ctrl = mmu.io.get_priv(8 + (bg as u32) * 2);
     let prio = (ctrl.priority() << 28) | (1 << 27) | ((bg as u32) << 25);
 
     let base = ctrl.base_addr();
@@ -214,8 +214,8 @@ pub(super) fn render_textmode_line(line: &mut LineBuf, row: u32, mmu: &GbaMmu, b
 
     let (xsize, ysize) = ctrl.size();
 
-    let xoff = extract(mmu.io.load16(0x10 + (bg as u32) * 4).get() as u32, 0, 9);
-    let yoff = extract(mmu.io.load16(0x12 + (bg as u32) * 4).get() as u32, 0, 9);
+    let xoff = extract(mmu.io.get_priv(0x10 + (bg as u32) * 4) as u32, 0, 9);
+    let yoff = extract(mmu.io.get_priv(0x12 + (bg as u32) * 4) as u32, 0, 9);
 
     let c256 = ctrl.is256c();
 
