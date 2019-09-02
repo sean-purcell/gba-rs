@@ -4,6 +4,7 @@ version = "0.1.0"
 authors = ["Sean Purcell <me@seanp.xyz>"]
 
 [dependencies]
+arraydeque = "0.4.5"
 byteorder = "^1.2.2"
 clap = "2"
 flame = "0.2.2"

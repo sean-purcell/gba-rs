@@ -1,4 +1,5 @@
 pub mod ppu;
+pub mod spu;
 pub mod key;
 mod dma;
 mod timer;

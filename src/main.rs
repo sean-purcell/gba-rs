@@ -1,3 +1,4 @@
+extern crate arraydeque;
 extern crate bincode;
 extern crate byteorder;
 extern crate clap;

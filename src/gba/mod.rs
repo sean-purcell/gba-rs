@@ -12,6 +12,7 @@ use flame;
 
 use sdl2;
 use sdl2::Sdl;
+use sdl2::audio::{AudioDevice, AudioSpecDesired};
 use sdl2::keyboard::Scancode;
 use sdl2::pixels::PixelFormatEnum;
 use sdl2::render::{Canvas, Texture, TextureCreator};
@@ -25,6 +26,7 @@ use cpu::Cpu;
 use io::IoReg;
 use io::key::KeyState;
 use io::ppu::{Ppu, ROWS, COLS};
+use io::spu::{Spu, SoundBuf, FREQ, SAMPLES};
 use mmu::gba::Gba as GbaMmu;
 use rom::GameRom;
 
@@ -63,11 +65,13 @@ pub struct Gba<'a> {
     canvas: Canvas<Window>,
     texture_creator: TextureCreator<WindowContext>,
     texture: Texture<'a>,
+    audio: AudioDevice<SoundBuf>,
 
     cpu: Cpu<GbaMmu<'a>>,
     mmu: GbaMmu<'a>,
     io: IoReg<'a>,
     ppu: Ppu<'a>,
+    spu: Spu<'a>,
 }
 
 impl<'a> Gba<'a> {
@@ -123,6 +127,27 @@ impl<'a> Gba<'a> {
                     Shared::new(&mut gba.mmu),
                 ),
             );
+
+            ptr::write(
+                &mut gba.spu,
+                Spu::new(Shared::new(&mut gba.io)),
+            );
+
+            let desired_spec = AudioSpecDesired {
+                freq: Some(FREQ),
+                channels: Some(2),
+                samples: Some((SAMPLES * 2) as u16),
+            };
+            let audio = gba.ctx.audio().unwrap();
+            let device = audio.open_playback(
+                None,
+                &desired_spec,
+                |spec| {
+                    warn!("Audio spec: {:?}", spec);
+                    gba.spu.get_callback()
+                }).unwrap();
+            ptr::write(&mut gba.audio, device);
+            gba.audio.resume();
 
             let cpu = Shared::new(&mut gba.cpu);
             let ppu = Shared::new(&mut gba.ppu);
@@ -221,6 +246,7 @@ impl<'a> Gba<'a> {
     fn cycle(&mut self) {
         self.cpu.cycle();
         self.ppu.cycle();
+        self.spu.cycle();
         self.io.cycle();
     }
 }
