@@ -4,6 +4,7 @@ version = "0.1.0"
 authors = ["Sean Purcell <me@seanp.xyz>"]
 
 [dependencies]
+arm7tdmi-rs = { git =  "https://github.com/daniel5151/arm7tdmi-rs.git", features = ["serde"] }
 arraydeque = "0.4.5"
 byteorder = "^1.2.2"
 clap = "2"
