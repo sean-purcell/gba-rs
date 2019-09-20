@@ -95,7 +95,11 @@ impl<T: MemoryUnit> Cpu<T> {
     /// Executes one instruction and returns whether the CPU should continue
     /// executing.
     pub fn execute_thumb(&mut self) -> bool {
-        let pc = self.reg[reg::PC];
+
+        let inst = self.prefetch_thumb();
+
+        let pc = self.reg[reg::PC] - 4;
+
         let inst = self.mmu.load16(pc) as u32;
         let cpsr = self.reg[reg::CPSR];
         let c = bit(cpsr, cpsr::C);
@@ -484,6 +488,14 @@ impl<T: MemoryUnit> Cpu<T> {
         };
 
         true
+    }
+
+    fn prefetch_thumb(&mut self, cycles: &mut i32) -> u32 {
+        let inst = self.prefetch[0];
+        self.prefetch[0] = self.prefetch[1];
+
+        self.reg[reg::PC] += 2;
+        self.prefetch[1] = self.load32(self, self.reg[reg::PC], cycles);
     }
 }
 

@@ -13,10 +13,11 @@ use super::ram::Ram;
 
 mod bios;
 mod save;
+mod wait;
 
 use self::bios::Bios;
-
 use self::save::Eeprom;
+use self::wait::WaitStates;
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash, Debug)]
 enum MemoryRange {
@@ -125,6 +126,8 @@ pub struct Gba<'a> {
 
     #[serde(skip)]
     pub cpu: Shared<Cpu<Gba<'a>>>
+
+    waitstates: WaitStates,
 }
 
 impl<'a> Gba<'a> {
@@ -277,6 +280,25 @@ impl<'a> MemoryUnit for Gba<'a> {
         match self.get_range_mut(addr) {
             Some((naddr, mmu)) => mmu.set32(naddr, val),
             None => warning(addr),
+        }
+    }
+
+    fn get_cycles(&self, addr: u32, width: u8, seq: bool) -> u8 {
+        use self::MemoryRange::*;
+        let range = MemoryRange::match_addr(addr);
+        let idx = match width {
+            1 => 0,
+            2 => 1,
+            4 => 2,
+            _ => panic!("Unsupported access width: {}", width),
+        };
+        match range {
+            Bios | IoRegister | ChipWram | ObjectAttr => 1,
+            BoardRam => [3, 3, 6][idx], // TODO: technically modifiable
+            Palette | VideoRam => [1, 1, 2][idx],
+            GamePakRom | GamePakEe | GamePakSram =>
+                self.waitstates.get_waitstates(addr, width, seq),
+            _ => 1,
         }
     }
 }

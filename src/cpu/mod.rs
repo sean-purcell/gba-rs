@@ -24,6 +24,9 @@ pub struct Cpu<T: MemoryUnit> {
     mmu: Shared<T>,
     #[serde(skip)]
     brk: HashSet<u32>,
+
+    prefetch: [u32; 2],
+    waitcycles: u32,
 }
 
 impl<T: MemoryUnit> Cpu<T> {
@@ -35,6 +38,9 @@ impl<T: MemoryUnit> Cpu<T> {
             reg: Default::default(),
             mmu: mmu,
             brk: Default::default(),
+
+            prefetch: [0, 0],
+            waitcycles: 0,
         };
         cpu.init(regs);
 
@@ -82,6 +88,11 @@ impl<T: MemoryUnit> Cpu<T> {
     }
 
     pub fn cycle(&mut self) -> bool {
+        if self.waitcycles > 0 {
+            self.waitcycles -= 1;
+            return true;
+        }
+
         if self.brk.contains(&self.reg[reg::PC]) {
             warn!("Breakpoint {:#010x} hit!", self.reg[reg::PC]);
             at_breakpoint();
