@@ -1,7 +1,7 @@
 use super::*;
 
-use mmu::Mmu;
 use mmu::gba::Gba as GbaMmu;
+use mmu::Mmu;
 
 pub(super) const SEMITRANS: u32 = 1 << 16;
 
@@ -63,7 +63,11 @@ pub(super) fn render_obj_line(
             (2, 1) => (8, 32),
             (2, 2) => (16, 32),
             (2, 3) => (32, 64),
-            (3, x) if x < 4 => /* invalid */ (0, 0),
+            (3, x) if x < 4 =>
+            /* invalid */
+            {
+                (0, 0)
+            }
             (_, _) => unreachable!(),
         };
 
@@ -129,8 +133,9 @@ pub(super) fn render_obj_line(
             continue;
         };
 
-        let prio = (extract(a2, 10, 2) << 28) | (o << 20) |
-            if extract(a0, 10, 2) == 1 {
+        let prio = (extract(a2, 10, 2) << 28)
+            | (o << 20)
+            | if extract(a0, 10, 2) == 1 {
                 SEMITRANS
             } else {
                 0
@@ -148,8 +153,9 @@ pub(super) fn render_obj_line(
             xval = xval.wrapping_add(dx);
             yval = yval.wrapping_add(dy);
 
-            if sx >= 240 || (!is_win && line[sx as usize] < prio) ||
-                (is_win && owin[sx as usize] != 0)
+            if sx >= 240
+                || (!is_win && line[sx as usize] < prio)
+                || (is_win && owin[sx as usize] != 0)
             {
                 continue;
             }
@@ -178,9 +184,10 @@ pub(super) fn render_obj_line(
                     owin[sx as usize] = 1;
                 }
             } else {
-                let colour = mmu.pram.load16(
-                    0x200 + palette * 32 + (palette_colour as u32) * 2,
-                ).get();
+                let colour = mmu
+                    .pram
+                    .load16(0x200 + palette * 32 + (palette_colour as u32) * 2)
+                    .get();
                 line[sx as usize] = (colour as u32) | prio;
             }
         }

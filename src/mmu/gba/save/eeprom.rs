@@ -2,15 +2,15 @@ use std::cell::RefCell;
 use std::fmt;
 use std::ops::{Deref, DerefMut};
 
-use serde::{Serialize, Serializer, Deserialize, Deserializer};
+use serde::de::{Error, SeqAccess, Visitor};
 use serde::ser::SerializeTuple;
-use serde::de::{Visitor, Error, SeqAccess};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 use shared::Shared;
 
 use io::IoReg;
 
-use mmu::{Mmu, MemoryRead};
+use mmu::{MemoryRead, Mmu};
 
 const MEM_SIZE: usize = 1024;
 
@@ -47,7 +47,9 @@ enum State {
 
 impl<'a> Default for Eeprom<'a> {
     fn default() -> Self {
-        Eeprom { ee: RefCell::new(Default::default()) }
+        Eeprom {
+            ee: RefCell::new(Default::default()),
+        }
     }
 }
 
@@ -216,7 +218,8 @@ impl<'de> Deserialize<'de> for EepromMem {
             fn visit_seq<A: SeqAccess<'de>>(self, mut seq: A) -> Result<EepromMem, A::Error> {
                 let mut mem: EepromMem = Default::default();
                 for i in 0..MEM_SIZE {
-                    mem[i] = seq.next_element()?
+                    mem[i] = seq
+                        .next_element()?
                         .ok_or_else(|| Error::invalid_length(i, &self))?;
                 }
                 Ok(mem)

@@ -7,16 +7,16 @@
 use std::ops::{Deref, DerefMut};
 
 use byteorder::{ByteOrder, LittleEndian};
-use serde::{Serialize, Serializer};
 use serde::ser::SerializeStruct;
+use serde::{Serialize, Serializer};
 
 use bit_util::{bit, extract, sign_extend};
 
 use super::{Ppu, COLS, DSPCNT, PIX_BYTES};
 
 mod background;
-mod object;
 mod combine;
+mod object;
 
 const TRANSPARENT: u32 = 0xf0000000;
 
@@ -129,8 +129,8 @@ fn in_win_vert(winv: u16, row: u32) -> bool {
     let y2 = (winv & 0xff) as u32;
 
     // logic here is weird, copying from vba
-    (y1 == y2 && y1 >= 0xe8) ||
-        if y1 <= y2 {
+    (y1 == y2 && y1 >= 0xe8)
+        || if y1 <= y2 {
             row >= y1 && row < y2
         } else {
             row >= y1 || row < y2

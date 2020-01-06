@@ -1,8 +1,8 @@
 use std::cmp::{max, min};
 
-use super::*;
 use super::background::*;
 use super::object::*;
+use super::*;
 
 use mmu::Mmu;
 
@@ -272,15 +272,13 @@ impl<'a> Ppu<'a> {
                 let mut fc = backdrop;
                 let mut f = 5;
                 macro_rules! check {
-                    ($c: expr, $i: expr) => {
-                        {
-                            let val = $c;
-                            if val < fc {
-                                f = $i;
-                                fc = val;
-                            }
+                    ($c: expr, $i: expr) => {{
+                        let val = $c;
+                        if val < fc {
+                            f = $i;
+                            fc = val;
                         }
-                    };
+                    }};
                 }
                 if objen {
                     check!(self.state.lineo[ux], 4);
@@ -303,15 +301,13 @@ impl<'a> Ppu<'a> {
                 let mut sc = backdrop;
                 let mut s = 5;
                 macro_rules! check {
-                    ($c: expr, $i: expr) => {
-                        {
-                            let val = $c;
-                            if val < sc {
-                                s = $i;
-                                sc = val;
-                            }
+                    ($c: expr, $i: expr) => {{
+                        let val = $c;
+                        if val < sc {
+                            s = $i;
+                            sc = val;
                         }
-                    };
+                    }};
                 }
                 if objen && first != 4 {
                     check!(self.state.lineo[ux], 4)

@@ -8,8 +8,8 @@ use rom::GameRom;
 
 use io::IoReg;
 
-use super::{Mmu, MemoryRead, MemoryUnit};
 use super::ram::Ram;
+use super::{MemoryRead, MemoryUnit, Mmu};
 
 mod bios;
 mod save;
@@ -86,8 +86,8 @@ impl MemoryRange {
     }
 
     pub fn match_addr(addr: u32) -> MemoryRange {
-        use bit_util::extract;
         use self::MemoryRange::*;
+        use bit_util::extract;
         match extract(addr, 24, 4) {
             0x0 => Bios,
             0x1 => Unused,
@@ -124,7 +124,7 @@ pub struct Gba<'a> {
     pub ee: Eeprom<'a>,
 
     #[serde(skip)]
-    pub cpu: Shared<Cpu<Gba<'a>>>
+    pub cpu: Shared<Cpu<Gba<'a>>>,
 }
 
 impl<'a> Gba<'a> {

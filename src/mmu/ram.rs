@@ -1,6 +1,6 @@
 use std::vec::Vec;
 
-use super::{Mmu, MemoryRead, MemoryUnit, bytes};
+use super::{bytes, MemoryRead, MemoryUnit, Mmu};
 
 /// Implements a basic memory model with no memory mapping
 #[derive(Serialize, Deserialize)]
@@ -10,7 +10,9 @@ pub struct Ram {
 
 impl Ram {
     pub fn new(size: usize) -> Ram {
-        Ram { mem: vec![0u8; size] }
+        Ram {
+            mem: vec![0u8; size],
+        }
     }
 
     pub fn new_with_data(size: usize, data: &[u8]) -> Ram {
@@ -61,7 +63,7 @@ impl MemoryUnit for RamUnit {
 
         match self.ram.load8(addr) {
             Value(x) => x,
-            Open => panic!("Accessing out of bounds memory")
+            Open => panic!("Accessing out of bounds memory"),
         }
     }
 
@@ -74,7 +76,7 @@ impl MemoryUnit for RamUnit {
 
         match self.ram.load16(addr) {
             Value(x) => x,
-            Open => panic!("Accessing out of bounds memory")
+            Open => panic!("Accessing out of bounds memory"),
         }
     }
 
@@ -87,7 +89,7 @@ impl MemoryUnit for RamUnit {
 
         match self.ram.load32(addr) {
             Value(x) => x,
-            Open => panic!("Accessing out of bounds memory")
+            Open => panic!("Accessing out of bounds memory"),
         }
     }
 

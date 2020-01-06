@@ -1,7 +1,7 @@
 use bit_util::{bit, extract};
 
-use mmu::{Mmu, MemoryUnit};
 use mmu::gba::Gba as GbaMmu;
+use mmu::{MemoryUnit, Mmu};
 use shared::Shared;
 
 use super::IoReg;
@@ -39,20 +39,16 @@ enum Register {
 
 fn addr_bits(reg: Register, ch: usize) -> u32 {
     match reg {
-        Register::Source => {
-            match ch {
-                0 => 27,
-                1 | 2 | 3 => 28,
-                _ => unreachable!(),
-            }
-        }
-        Register::Dest => {
-            match ch {
-                0 | 1 | 2 => 27,
-                3 => 28,
-                _ => unreachable!(),
-            }
-        }
+        Register::Source => match ch {
+            0 => 27,
+            1 | 2 | 3 => 28,
+            _ => unreachable!(),
+        },
+        Register::Dest => match ch {
+            0 | 1 | 2 => 27,
+            3 => 28,
+            _ => unreachable!(),
+        },
     }
 }
 

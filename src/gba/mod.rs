@@ -5,28 +5,28 @@ use std::fs::File;
 use std::mem;
 use std::path::Path;
 use std::ptr;
-use std::time::{Duration, Instant};
 use std::thread;
+use std::time::{Duration, Instant};
 
 use flame;
 
 use sdl2;
-use sdl2::Sdl;
 use sdl2::audio::{AudioDevice, AudioSpecDesired};
 use sdl2::keyboard::Scancode;
 use sdl2::pixels::PixelFormatEnum;
 use sdl2::render::{Canvas, Texture, TextureCreator};
 use sdl2::video::{Window, WindowContext};
+use sdl2::Sdl;
 
 use shared::Shared;
 
 use Result;
 
 use cpu::Cpu;
-use io::IoReg;
 use io::key::KeyState;
-use io::ppu::{Ppu, ROWS, COLS};
-use io::spu::{Spu, SoundBuf, FREQ, SAMPLES};
+use io::ppu::{Ppu, COLS, ROWS};
+use io::spu::{SoundBuf, Spu, FREQ, SAMPLES};
+use io::IoReg;
 use mmu::gba::Gba as GbaMmu;
 use rom::GameRom;
 
@@ -128,10 +128,7 @@ impl<'a> Gba<'a> {
                 ),
             );
 
-            ptr::write(
-                &mut gba.spu,
-                Spu::new(Shared::new(&mut gba.io)),
-            );
+            ptr::write(&mut gba.spu, Spu::new(Shared::new(&mut gba.io)));
 
             let desired_spec = AudioSpecDesired {
                 freq: Some(FREQ),
@@ -139,13 +136,12 @@ impl<'a> Gba<'a> {
                 samples: Some((SAMPLES * 2) as u16),
             };
             let audio = gba.ctx.audio().unwrap();
-            let device = audio.open_playback(
-                None,
-                &desired_spec,
-                |spec| {
+            let device = audio
+                .open_playback(None, &desired_spec, |spec| {
                     warn!("Audio spec: {:?}", spec);
                     gba.spu.get_callback()
-                }).unwrap();
+                })
+                .unwrap();
             ptr::write(&mut gba.audio, device);
             gba.audio.resume();
 
@@ -153,7 +149,6 @@ impl<'a> Gba<'a> {
             let ppu = Shared::new(&mut gba.ppu);
             gba.mmu.init(cpu);
             gba.io.init(cpu, Shared::new(&mut gba.mmu), ppu);
-
 
             gba
         }
@@ -196,8 +191,8 @@ impl<'a> Gba<'a> {
             loop {
                 let ctrl = {
                     let keys = event_pump.keyboard_state();
-                    keys.is_scancode_pressed(Scancode::LCtrl) ||
-                        keys.is_scancode_pressed(Scancode::RCtrl)
+                    keys.is_scancode_pressed(Scancode::LCtrl)
+                        || keys.is_scancode_pressed(Scancode::RCtrl)
                 };
                 if let Some(event) = event_pump.poll_event() {
                     if let sdl2::event::Event::KeyDown { scancode, .. } = event {

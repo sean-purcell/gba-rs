@@ -4,10 +4,10 @@ use std::result::Result;
 use bincode;
 use zstd;
 
-use serde::{Serialize, Serializer, Deserialize, Deserializer};
-use serde::ser::SerializeStruct;
 use serde::de;
-use serde::de::{Visitor, SeqAccess};
+use serde::de::{SeqAccess, Visitor};
+use serde::ser::SerializeStruct;
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 use super::*;
 
@@ -28,7 +28,7 @@ impl<'a> Gba<'a> {
             _ => 10,
         };
         if index == 10 {
-            return
+            return;
         }
         let mut path = self.opts.save_file.to_os_string();
         path.push(format!("{}.sav", index));
@@ -37,7 +37,7 @@ impl<'a> Gba<'a> {
                 let mut writer = zstd::Encoder::new(&file, 1).unwrap();
                 bincode::serialize_into(&mut writer, self).unwrap();
                 info!("Saved file {:?}", path);
-            },
+            }
             Err(err) => error!("Failed to create save state: {}", err),
         }
     }
@@ -65,13 +65,17 @@ impl<'de> Deserialize<'de> for Gba<'static> {
             }
 
             fn visit_seq<V: SeqAccess<'de>>(self, mut seq: V) -> Result<Gba<'static>, V::Error> {
-                let cpu = seq.next_element()?
+                let cpu = seq
+                    .next_element()?
                     .ok_or_else(|| de::Error::invalid_length(0, &self))?;
-                let mmu = seq.next_element()?
+                let mmu = seq
+                    .next_element()?
                     .ok_or_else(|| de::Error::invalid_length(1, &self))?;
-                let io = seq.next_element()?
+                let io = seq
+                    .next_element()?
                     .ok_or_else(|| de::Error::invalid_length(2, &self))?;
-                let ppu = seq.next_element()?
+                let ppu = seq
+                    .next_element()?
                     .ok_or_else(|| de::Error::invalid_length(3, &self))?;
 
                 unsafe {

@@ -1,11 +1,11 @@
 use std::fmt;
 use std::fs::File;
-use std::path::Path;
 use std::ops::Deref;
+use std::path::Path;
 
 use memmap::{Mmap, MmapMut};
 
-use mmu::{Mmu, MemoryRead, bytes};
+use mmu::{bytes, MemoryRead, Mmu};
 
 use GBAError;
 use Result;
@@ -17,12 +17,10 @@ pub struct GameRom {
 impl GameRom {
     pub fn new(path: &Path) -> Result<GameRom> {
         match File::open(path) {
-            Ok(file) => {
-                match unsafe { Mmap::map(&file) } {
-                    Ok(mmap) => Ok(GameRom { rom: mmap }),
-                    Err(err) => Err(GBAError::RomLoadError(err)),
-                }
-            }
+            Ok(file) => match unsafe { Mmap::map(&file) } {
+                Ok(mmap) => Ok(GameRom { rom: mmap }),
+                Err(err) => Err(GBAError::RomLoadError(err)),
+            },
             Err(err) => Err(GBAError::RomLoadError(err)),
         }
     }
@@ -30,9 +28,9 @@ impl GameRom {
 
 impl Default for GameRom {
     fn default() -> Self {
-        return GameRom { rom:
-            MmapMut::map_anon(0).unwrap()
-                .make_read_only().unwrap() }
+        return GameRom {
+            rom: MmapMut::map_anon(0).unwrap().make_read_only().unwrap(),
+        };
     }
 }
 
@@ -51,8 +49,7 @@ where
 {
     warn!(
         "Attempted to store to game ROM: a: {:#010x}, v: {:#x}",
-        addr,
-        val
+        addr, val
     );
 }
 

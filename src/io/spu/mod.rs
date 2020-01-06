@@ -58,14 +58,14 @@ impl AudioCallback for SoundBuf {
         let mut buf = self.0.lock().unwrap();
         let mut missed = 0;
         warn!("Sound buffer length: {}", buf.len());
-        for i in 0..(out.len()/2) {
+        for i in 0..(out.len() / 2) {
             let (l, r) = match buf.pop_front() {
                 Some((l, r)) => (l, r),
                 None => {
                     //warn!("Sound sample not available when queried");
                     missed += 1;
                     (0.0, 0.0)
-                },
+                }
             };
             out[i * 2 + 0] = l * 0.5;
             out[i * 2 + 1] = r * 0.5;

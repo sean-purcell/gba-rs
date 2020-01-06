@@ -5,8 +5,8 @@ use sdl2::render::Texture;
 use mmu::gba::Gba as GbaMmu;
 use shared::Shared;
 
-use super::*;
 use super::dma::Trigger;
+use super::*;
 
 mod render;
 
@@ -150,13 +150,13 @@ impl<'a> Ppu<'a> {
         // wrap around, blit our image to the texture
         let pixels = Shared::new(&mut self.pixels);
         self.texture
-            .with_lock(None, |buf, pitch| for row in 0..160 {
-                let buf_start = row * pitch;
-                let pix_start = row * ROW_BYTES;
-                buf[buf_start..buf_start + ROW_BYTES].clone_from_slice(
-                    &pixels
-                        [pix_start..pix_start + ROW_BYTES],
-                );
+            .with_lock(None, |buf, pitch| {
+                for row in 0..160 {
+                    let buf_start = row * pitch;
+                    let pix_start = row * ROW_BYTES;
+                    buf[buf_start..buf_start + ROW_BYTES]
+                        .clone_from_slice(&pixels[pix_start..pix_start + ROW_BYTES]);
+                }
             })
             .unwrap();
     }

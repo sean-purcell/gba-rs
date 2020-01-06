@@ -1,17 +1,17 @@
+mod dma;
+pub mod key;
 pub mod ppu;
 pub mod spu;
-pub mod key;
-mod dma;
 mod timer;
 
-use self::ppu::Ppu;
 use self::dma::Dma;
+use self::ppu::Ppu;
 use self::timer::Timers;
 
-use cpu::{Cpu, exception};
-use mmu::{Mmu, MemoryRead};
+use cpu::{exception, Cpu};
 use mmu::gba::Gba as GbaMmu;
 use mmu::ram::Ram;
+use mmu::{MemoryRead, Mmu};
 use shared::Shared;
 
 const IO_REG_SIZE: usize = 0x804;
@@ -116,15 +116,10 @@ impl<'a> IoReg<'a> {
         if !readable(addr) {
             // If the other half of the 32 bit range is readable, t his is just
             // 0 instead of open bus.
-            return if readable(addr ^ 2) {
-                Value(0)
-            } else {
-                Open
-            };
+            return if readable(addr ^ 2) { Value(0) } else { Open };
         }
         let val = match addr {
-            0x100 | 0x104 | 0x108 | 0x10c => 
-                self.timers.get((addr - 0x100) / 4),
+            0x100 | 0x104 | 0x108 | 0x10c => self.timers.get((addr - 0x100) / 4),
             _ => self.reg.load16(addr).get(),
         };
         let wo = wo_mask(addr);
@@ -133,8 +128,10 @@ impl<'a> IoReg<'a> {
 
     fn set(&mut self, addr: u32, val: u16) {
         if !writable(addr) {
-            warn!("Writing to non-writable IO register: {:#010x} -> {:#06x}",
-                  addr, val);
+            warn!(
+                "Writing to non-writable IO register: {:#010x} -> {:#06x}",
+                addr, val
+            );
             // If not writable, no point in doing anything
             return;
         }
@@ -186,7 +183,9 @@ impl<'a> Mmu for IoReg<'a> {
     fn set8(&mut self, addr: u32, val: u8) {
         let pv = if (addr as usize) < self.reg.len() {
             self.get_priv(addr & !1)
-        } else { 0 };
+        } else {
+            0
+        };
         let shift = (addr & 1) * 8;
         let mask = 0xff00 >> shift;
         let nv = (pv & mask) | ((val as u16) << shift);
@@ -223,43 +222,17 @@ impl<'a> Mmu for IoReg<'a> {
 // 1 is readable, 2 is writable.
 const READWRITABLE: [u8; 0x108] = [
     // LCD: 000
-    3, 3, 3, 1, 3, 3, 3, 3,
-    2, 2, 2, 2, 2, 2, 2, 2,
-    2, 2, 2, 2, 2, 2, 2, 2,
-    2, 2, 2, 2, 2, 2, 2, 2,
-    2, 2, 2, 2, 3, 3, 2, 0,
-    3, 3, 2, 0, 0, 0, 0, 0,
-    // SOUND: 060
-    3, 3, 3, 0, 3, 0, 3, 0,
-    3, 3, 3, 0, 3, 0, 3, 0,
-    3, 3, 3, 0, 3, 0, 0, 0,
-    3, 3, 3, 3, 3, 3, 3, 3,
-    2, 2, 2, 2, 0, 0, 0, 0,
-    // DMA: 0B0
-    2, 2, 2, 2, 2, 3, 2, 2,
-    2, 2, 2, 3, 2, 2, 2, 2,
-    2, 3, 2, 2, 2, 2, 2, 3,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    // TIMER: 100
-    3, 3, 3, 3, 3, 3, 3, 3,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    // SERIAL + KEYPAD: 120
-    3, 3, 3, 3, 3, 3, 0, 0,
-    1, 3, 3, 0, 0, 0, 0, 0,
-    3, 0, 0, 0, 0, 0, 0, 0,
-    3, 3, 3, 3, 3, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    // SYSTEM CONTROL: 200
+    3, 3, 3, 1, 3, 3, 3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+    2, 2, 2, 2, 3, 3, 2, 0, 3, 3, 2, 0, 0, 0, 0, 0, // SOUND: 060
+    3, 3, 3, 0, 3, 0, 3, 0, 3, 3, 3, 0, 3, 0, 3, 0, 3, 3, 3, 0, 3, 0, 0, 0, 3, 3, 3, 3, 3, 3, 3, 3,
+    2, 2, 2, 2, 0, 0, 0, 0, // DMA: 0B0
+    2, 2, 2, 2, 2, 3, 2, 2, 2, 2, 2, 3, 2, 2, 2, 2, 2, 3, 2, 2, 2, 2, 2, 3, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, // TIMER: 100
+    3, 3, 3, 3, 3, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, // SERIAL + KEYPAD: 120
+    3, 3, 3, 3, 3, 3, 0, 0, 1, 3, 3, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 3, 3, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // SYSTEM CONTROL: 200
     3, 3, 3, 0, 3, 0, 0, 0,
 ];
 

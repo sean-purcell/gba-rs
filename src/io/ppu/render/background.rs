@@ -1,7 +1,7 @@
 use super::*;
 
-use mmu::Mmu;
 use mmu::gba::Gba as GbaMmu;
+use mmu::Mmu;
 
 pub enum RotScaleCtrl {
     TileMap(u16),
@@ -51,14 +51,12 @@ impl RotScaleCtrl {
                 let s = 128 * (1 << extract(ctrl as u32, 14, 2));
                 (s, s)
             }
-            Bitmap(dspcnt) => {
-                match extract(dspcnt as u32, 0, 3) {
-                    3 => (240, 160),
-                    4 => (240, 160),
-                    5 => (160, 128),
-                    _ => unreachable!(),
-                }
-            }
+            Bitmap(dspcnt) => match extract(dspcnt as u32, 0, 3) {
+                3 => (240, 160),
+                4 => (240, 160),
+                5 => (160, 128),
+                _ => unreachable!(),
+            },
         }
     }
 
@@ -76,13 +74,11 @@ impl RotScaleCtrl {
         use self::RotScaleCtrl::*;
         match *self {
             TileMap(_ctrl) => true,
-            Bitmap(dspcnt) => {
-                match extract(dspcnt as u32, 0, 3) {
-                    3 | 5 => false,
-                    4 => true,
-                    _ => unreachable!(),
-                }
-            }
+            Bitmap(dspcnt) => match extract(dspcnt as u32, 0, 3) {
+                3 | 5 => false,
+                4 => true,
+                _ => unreachable!(),
+            },
         }
     }
 }
@@ -263,7 +259,10 @@ pub(super) fn render_textmode_line(line: &mut LineBuf, row: u32, mmu: &GbaMmu, b
         line[x as usize] = if palette_colour == 0 {
             TRANSPARENT
         } else {
-            mmu.pram.load16(palette * 32 + (palette_colour as u32) * 2).get() as u32 | prio
+            mmu.pram
+                .load16(palette * 32 + (palette_colour as u32) * 2)
+                .get() as u32
+                | prio
         };
     }
 }

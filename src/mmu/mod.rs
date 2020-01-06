@@ -1,6 +1,6 @@
+pub mod bytes;
 pub mod gba;
 pub mod ram;
-pub mod bytes;
 
 // Add result type for memory accesses here
 #[derive(Debug)]
